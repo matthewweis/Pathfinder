@@ -1,3 +1,4 @@
+/*
 package com.mweis.pathfinder.engine.entity.components;
 
 import com.badlogic.ashley.core.Component;
@@ -20,4 +21,13 @@ public class DirectionComponent implements Component {
 	public void setAngleRadians(float angrad) {
 		this.angrad = angrad;
 	}
+	
+	public DirectionComponent() {
+		angrad = 0.0f;
+	}
+	
+	public DirectionComponent(float angrad) {
+		this.angrad = angrad;
+	}
 }
+*/

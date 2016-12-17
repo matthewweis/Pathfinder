@@ -4,18 +4,19 @@ import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Screen;
-import com.mweis.pathfinder.engine.entity.components.DirectionComponent;
-import com.mweis.pathfinder.engine.entity.components.PositionComponent;
-import com.mweis.pathfinder.engine.entity.components.SpeedComponent;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.Input.Keys;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
 import com.mweis.pathfinder.engine.entity.systems.MovementSystem;
-import com.mweis.pathfinder.engine.entity.systems.TestSystem;
+import com.mweis.pathfinder.engine.entity.systems.RenderingSystem;
 import com.mweis.pathfinder.engine.util.Debug;
+import com.mweis.pathfinder.engine.views.ResourceManager;
+import com.mweis.pathfinder.game.entity.EntityFactory;
 
 public class GameScreen implements Screen {
 	Engine engine = new Engine();
-	Entity entity = new Entity();
-	Entity entity2 = new Entity();
+	Entity entity = EntityFactory.spawnTestEntity(0.0f, 0.0f, 0.0f, ResourceManager.getSprite("sprite1"));
+	SpriteBatch batch = new SpriteBatch();
 	
 	@Override
 	public void show() {
@@ -23,23 +24,25 @@ public class GameScreen implements Screen {
 		Debug.isDebugMode = true;
 		System.out.println("INIT");
 		
-		engine.addSystem(new MovementSystem());
-		engine.addSystem(new TestSystem());
+		// ADD SPRITES
+		ResourceManager.loadSprite("sprite1", "badlogic.jpg");
 		
-		entity.add(new MovementCommand());
-		entity.add(new DirectionComponent());
-		entity.add(new PositionComponent());
-		entity.add(new SpeedComponent());
+		engine.addSystem(new MovementSystem());
+		engine.addSystem(new RenderingSystem(batch));
 		engine.addEntity(entity);
-		entity2.add(new MovementCommand());
-		engine.addEntity(entity2);
+		//batch.begin();
 	}
 
 	@Override
 	public void render(float delta) {
-		//System.out.println("render");
-		//Debug.printCommaSeperated(Gdx.input.getX(), Gdx.input.getY());
+		batch.begin();
 		engine.update(delta);
+		batch.end();
+		if (Gdx.input.isKeyPressed(Keys.A)) {
+			entity.add(new MovementCommand(0.0f, 0.0f));
+		} else if (Gdx.input.isKeyPressed(Keys.S)) {
+			entity.remove(MovementCommand.class);
+		}
 	}
 
 	@Override
