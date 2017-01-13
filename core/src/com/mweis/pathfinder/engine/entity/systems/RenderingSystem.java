@@ -27,7 +27,11 @@ public class RenderingSystem extends IteratingSystem {
 		PositionComponent position = Mappers.positionMapper.get(entity);
 		SpriteComponent sprite = Mappers.spriteMapper.get(entity);
 		
-		sprite.sprite.setPosition(position.position.x, position.position.y); // set sprite pos to entity pos
+		Debug.printCommaSeperated(position.position.x);
+		
+		if (sprite.sprite != null) {
+			sprite.sprite.setPosition(position.position.x, position.position.y); // set sprite pos to entity pos
+		}
 //		sprite.sprite.setOrigin(position.position.x, position.position.y);
 		
 		if (sprite.sprite != null) {

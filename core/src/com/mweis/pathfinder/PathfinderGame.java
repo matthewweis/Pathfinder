@@ -3,6 +3,7 @@ package com.mweis.pathfinder;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import com.mweis.pathfinder.engine.input.InputHandler;
 import com.mweis.pathfinder.engine.views.ScreenManager;
 import com.mweis.pathfinder.game.views.screen.GameScreen;
 
@@ -23,6 +24,7 @@ public class PathfinderGame implements ApplicationListener {
 		Gdx.gl.glClearColor(1, 0, 1, 1);
 		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 		ScreenManager.getCurrentScreen().render(Gdx.graphics.getDeltaTime());
+		InputHandler.update();
 	}
 
 	@Override

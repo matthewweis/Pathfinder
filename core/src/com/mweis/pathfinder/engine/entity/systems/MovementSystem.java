@@ -34,7 +34,6 @@ public class MovementSystem extends IteratingSystem {
 			position.position.x -= speed.speed * deltaTime;
 		}
 		
-		
 		if (position.position.y < move.position.y) {
 			position.position.y += speed.speed * deltaTime;
 		} else if (position.position.y > move.position.y) {
@@ -42,10 +41,5 @@ public class MovementSystem extends IteratingSystem {
 		}
 		
 		Debug.printCommaSeperated(position.position.x, "to ", move.position.x, " | " ,position.position.y, "to ", move.position.y);
-		
-		// TEMP, WILL NEED A CLASS TO CONFORM GFX TO LOGIC
-		if (sprite != null) {
-			sprite.sprite.setCenter(position.position.x, position.position.y);
-		}
 	}	
 }
