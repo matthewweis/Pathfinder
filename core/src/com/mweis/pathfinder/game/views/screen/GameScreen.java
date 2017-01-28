@@ -19,9 +19,9 @@ import com.mweis.pathfinder.engine.entity.systems.MovementSystem;
 import com.mweis.pathfinder.engine.entity.systems.PlayerInputSystem;
 import com.mweis.pathfinder.engine.entity.systems.RenderingSystem;
 import com.mweis.pathfinder.engine.input.InputHandler;
+import com.mweis.pathfinder.engine.input.MouseAction;
 import com.mweis.pathfinder.engine.util.ConversionUtil;
 import com.mweis.pathfinder.engine.util.Debug;
-import com.mweis.pathfinder.engine.util.MouseAction;
 import com.mweis.pathfinder.engine.util.MouseButtons;
 import com.mweis.pathfinder.engine.views.ResourceManager;
 import com.mweis.pathfinder.game.entity.EntityFactory;
@@ -45,7 +45,7 @@ public class GameScreen implements Screen {
 		sprite.setSize(20, 20);
 		//entity = EntityFactory.spawnTestEntity(0.0f, 0.0f, 30.0f, sprite);
 		
-		engine.addSystem(new MovementSystem());
+		engine.addSystem(new MovementSystem(engine));
 		engine.addSystem(new RenderingSystem(batch));
 		engine.addSystem(new PlayerInputSystem());
 		//engine.addEntity(entity);
@@ -76,6 +76,9 @@ public class GameScreen implements Screen {
 			System.out.println(cam.unproject(new Vector3(action.x, action.y, 0.0f)).toString());
 		}
 		
+		if (input.wasKeyDown(Input.Keys.T)) {
+			player.add(new MovementCommand(20.0f, 20.0f));
+        }
 		
         if (input.wasKeyDown(Input.Keys.A)) {
             cam.zoom += 0.02;
@@ -135,7 +138,7 @@ public class GameScreen implements Screen {
 	@Override
 	public void resize(int width, int height) {
 		System.out.println("resize");
-//		cam.viewportWidth = width;                 // Viewport of 30 units!
+//		cam.viewportWidth = width
 //        cam.viewportHeight = width * height/width; // Lets keep things in proportion.
 //        cam.update();
         System.out.println(Gdx.graphics.getWidth() + ", " + Gdx.graphics.getHeight());

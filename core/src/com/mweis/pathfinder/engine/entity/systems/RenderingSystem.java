@@ -21,13 +21,19 @@ public class RenderingSystem extends IteratingSystem {
 	public void setSpriteBatch(SpriteBatch batch) {
 		this.batch = batch;
 	}
-
+	
+	private int tick = 0;
+	
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
 		PositionComponent position = Mappers.positionMapper.get(entity);
 		SpriteComponent sprite = Mappers.spriteMapper.get(entity);
 		
-		Debug.printCommaSeperated(position.position.x);
+		tick++;
+		if (tick >= 100) {
+			tick -= 100;
+			Debug.printCommaSeperated("entity located at ", position.position.x, position.position.y);
+		}
 		
 		if (sprite.sprite != null) {
 			sprite.sprite.setPosition(position.position.x, position.position.y); // set sprite pos to entity pos

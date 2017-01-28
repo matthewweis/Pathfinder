@@ -8,6 +8,7 @@ import com.mweis.pathfinder.engine.entity.components.InputComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.entity.components.SpeedComponent;
 import com.mweis.pathfinder.engine.entity.components.SpriteComponent;
+import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
 import com.mweis.pathfinder.engine.input.InputHandler;
 
 public class EntityFactory {

@@ -7,7 +7,7 @@ import java.util.Set;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.math.Vector2;
-import com.mweis.pathfinder.engine.util.MouseAction;
+import com.mweis.pathfinder.engine.util.Debug;
 
 /*
  * A front-end method set for the back-end class InputListener.
@@ -44,6 +44,7 @@ public class InputHandler {
 		Iterator<Vector2> it2 = lastMouseButtonsPressed.values().iterator();
 		while (it.hasNext()) {
 			Vector2 i = it2.next();
+			Debug.printCommaSeperated("mouse button pressed", i.toString());
 			if (lastMouseButtonsPressed.containsKey(i.x) && lastMouseButtonsReleased.containsKey(i.x)) {
 				it2.remove();
 //				lastMouseButtonsPressed.remove(i.x);
@@ -61,7 +62,6 @@ public class InputHandler {
 	}
 	
 	public MouseAction wasMousePressed(int button) {
-		System.out.println("mouse pressed probe");
 		if (lastMouseButtonsPressed.containsKey(button)) {
 			return new MouseAction(lastMouseButtonsPressed.get(button), true);
 		} else {
@@ -70,7 +70,6 @@ public class InputHandler {
 	}
 	
 	public MouseAction wasMouseReleased(int button) {
-		System.out.println("mouse released probe");
 		if (lastMouseButtonsReleased.containsKey(button)) {
 			return new MouseAction(lastMouseButtonsReleased.get(button), true);
 		} else {
