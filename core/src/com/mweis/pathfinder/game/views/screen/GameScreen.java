@@ -69,7 +69,7 @@ public class GameScreen implements Screen {
 		}
 		*/
 		
-		MouseAction action = input.wasMousePressed(MouseButtons.RIGHT);
+		MouseAction action = input.wasMousePressed(MouseButtons.LEFT);
 		if (action.bool) {
 //				System.out.println(cam.unproject(new Vector3(coords.x, coords.y, 0.0f)).toString());
 			System.exit(0);
