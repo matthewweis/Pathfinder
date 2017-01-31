@@ -23,11 +23,11 @@ public class EntityFactory {
 		return entity;
 	}
 	
-	public static Entity spawnTestPlayer(float x, float y, float speed, InputHandler input, Sprite sprite, Engine engine) {
+	public static Entity spawnTestPlayer(float x, float y, float speed, Sprite sprite, Engine engine) {
 		Entity entity = new Entity();
 		entity.add(new DirectionComponent());
 		entity.add(new PositionComponent(x, y));
-		entity.add(new InputComponent(input));
+		//entity.add(new InputComponent(input));
 		entity.add(new SpeedComponent(speed));
 		entity.add(new SpriteComponent(sprite));
 		engine.addEntity(entity);

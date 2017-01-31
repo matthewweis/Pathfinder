@@ -7,7 +7,6 @@ import com.mweis.pathfinder.engine.entity.components.InputComponent;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
 import com.mweis.pathfinder.engine.input.MouseAction;
 import com.mweis.pathfinder.engine.util.Mappers;
-import com.mweis.pathfinder.engine.util.MouseButtons;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
 
 public class PlayerInputSystem extends IteratingSystem {
@@ -19,6 +18,7 @@ public class PlayerInputSystem extends IteratingSystem {
 
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
+		/*
 		// if blocks for all *raw* input (which will be replaced by a command pattern)
 		InputComponent input = Mappers.inputMapper.get(entity);
 		MouseAction action = input.input.wasMousePressed(MouseButtons.RIGHT);
@@ -26,6 +26,7 @@ public class PlayerInputSystem extends IteratingSystem {
 		if (action.bool) {
 			entity.add(new MovementCommand(action.x, action.y));
 		}
+		*/
 	}
 	
 }

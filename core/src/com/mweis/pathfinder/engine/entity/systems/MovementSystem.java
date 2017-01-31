@@ -5,6 +5,7 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.math.Interpolation;
+import com.badlogic.gdx.math.Vector2;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.entity.components.SpeedComponent;
 import com.mweis.pathfinder.engine.entity.components.SpriteComponent;
@@ -31,26 +32,52 @@ public class MovementSystem extends EntitySystem {
 		this.engine = engine;
 	}
 	
+	/*
+	float lastTime = 0.0f;
+	float currTime = 0.0f;
+	Vector2 lastPos;
+	*/
+	
 	public void update (float deltaTime) {
 		for (Entity entity : engine.getEntitiesFor(family)) {
-			System.out.println("movement sys tick");
 			MovementCommand move = Mappers.movementMapper.get(entity);
 			PositionComponent position = Mappers.positionMapper.get(entity);
 			SpeedComponent speed = Mappers.speedMapper.get(entity);
-			SpriteComponent sprite = Mappers.spriteMapper.get(entity);
 			
-			
-			// MAKE THIS A LERP
-			move.alpha += deltaTime;
-			position.position = position.position.lerp(move.position, move.alpha);
-			
-			Debug.printCommaSeperated(position.position.x, "to ", move.position.x, " | " ,position.position.y, "to ", move.position.y);
-			Debug.printCommaSeperated(move.alpha);
+			move.alpha += (speed.speed / move.dist) * deltaTime;
+			position.position.set(move.start).lerp(move.end, move.alpha);
 			
 			if (move.alpha >= 1.0f) { // done with lerp, must rm move command
-				Debug.printCommaSeperated("REMOVE", move.alpha);
 				entity.remove(MovementCommand.class);
 			}
+			
+			/*
+			if (lastPos == null) {
+				lastPos = new Vector2(position.position);
+			}
+			*/
+			
+//			Vector2 dir = (move.end.sub(move.start)).nor();
+//			position.position = move.start;
+			
+//			position.position.add(move.dir.scl(speed.speed).scl(deltaTime));
+//			if (move.start.dst(position.position) >= move.dist) {
+//				Debug.printCommaSeperated("REMOVE", move.alpha);
+//				entity.remove(MovementCommand.class);
+//			}
+			
+//			Debug.printCommaSeperated(position.position.x, "to ", position.position.x, " | " ,position.position.y, "to ", position.position.y);
+//			Debug.printCommaSeperated(move.alpha);
+
+			/*
+			currTime += deltaTime;
+			if (currTime > lastTime + 0.05) {
+				float calcSpeed = lastPos.dst(position.position) / (currTime - lastTime);
+				System.out.println(calcSpeed);
+				lastTime = currTime;
+				lastPos = new Vector2(position.position);
+			}
+			*/
 		}
 	}
 }

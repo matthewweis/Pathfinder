@@ -36,21 +36,30 @@ public class InputHandler {
 		while (it.hasNext()) {
 			Integer i = it.next();
 			if (keysDown.contains(i) && keysUp.contains(i)) {
+				// remove from both
 				it.remove();
-//				keysDown.remove(i);
 				keysUp.remove(i);
 			}
 		}
-		Iterator<Vector2> it2 = lastMouseButtonsPressed.values().iterator();
-		while (it.hasNext()) {
-			Vector2 i = it2.next();
-			Debug.printCommaSeperated("mouse button pressed", i.toString());
-			if (lastMouseButtonsPressed.containsKey(i.x) && lastMouseButtonsReleased.containsKey(i.x)) {
-				it2.remove();
-//				lastMouseButtonsPressed.remove(i.x);
-				lastMouseButtonsReleased.remove(i.x);
-			}
-		}
+		
+		HashMap<Integer, Vector2> copy1 = new HashMap<Integer, Vector2>(lastMouseButtonsPressed);
+		HashMap<Integer, Vector2> copy2 = new HashMap<Integer, Vector2>(lastMouseButtonsReleased);
+		
+		lastMouseButtonsPressed.keySet().removeAll(copy1.keySet());
+		lastMouseButtonsReleased.keySet().removeAll(copy2.keySet());
+		
+//		Iterator<Vector2> it2 = lastMouseButtonsPressed.values().iterator();
+//		while (it2.hasNext()) {
+//			Vector2 i = it2.next();
+//			System.out.println("mouse button pressed" + i.toString());
+//			
+////			if (lastMouseButtonsPressed.containsKey(i.x) && lastMouseButtonsReleased.containsKey(i.x)) {
+////				lastMouseButtonsPressed
+////				// remove from both
+////				it2.remove();
+////				lastMouseButtonsReleased.remove(i.x);
+////			}
+//		}
 		
 	}
 	
@@ -61,6 +70,7 @@ public class InputHandler {
 		return keysUp.contains(keycode);
 	}
 	
+	// this frame
 	public MouseAction wasMousePressed(int button) {
 		if (lastMouseButtonsPressed.containsKey(button)) {
 			return new MouseAction(lastMouseButtonsPressed.get(button), true);
@@ -69,6 +79,7 @@ public class InputHandler {
 		}
 	}
 	
+	// this frame
 	public MouseAction wasMouseReleased(int button) {
 		if (lastMouseButtonsReleased.containsKey(button)) {
 			return new MouseAction(lastMouseButtonsReleased.get(button), true);
@@ -76,5 +87,4 @@ public class InputHandler {
 			return new MouseAction(null, false);
 		}
 	}
-	
 }

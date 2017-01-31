@@ -35,7 +35,7 @@ public class ResourceManager {
 	}
 	
 	public static Sprite getSprite(String id) {
-		return sprites.get(id);
+		return new Sprite(sprites.get(id));
 	}
 	
 	public static Texture getTexture(String id) {
