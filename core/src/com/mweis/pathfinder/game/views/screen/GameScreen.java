@@ -82,14 +82,14 @@ public class GameScreen implements Screen {
         final float yCameraBound = Gdx.graphics.getHeight() * camEdge;
         
         if (Gdx.input.getX() < xCameraBound) {
-        	cam.translate(-3, 0, 0);
+        	cam.translate(-10, 0, 0);
         } else if (Gdx.input.getX() > Gdx.graphics.getWidth() - xCameraBound) {
-        	cam.translate(3, 0, 0);
+        	cam.translate(10, 0, 0);
         }
         if (Gdx.input.getY() < yCameraBound) {
-        	cam.translate(0, 3, 0);
+        	cam.translate(0, 10, 0);
         } else if (Gdx.input.getY() > Gdx.graphics.getHeight() - yCameraBound) {
-        	cam.translate(0, -3, 0);
+        	cam.translate(0, -10, 0);
         }
 	}
 	
