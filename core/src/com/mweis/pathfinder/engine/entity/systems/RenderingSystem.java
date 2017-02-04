@@ -52,15 +52,21 @@ public class RenderingSystem extends IteratingSystem {
 				anim.stateTime = 0.0f; // otherwise "reset" to standing pose
 			}
 			
-			TextureRegion currFrame = anim.animation.getKeyFrame(anim.stateTime, true);
-			
+			TextureRegion currFrame = anim.map._default().getKeyFrame(anim.stateTime, true);
 			
 			
 			if (Mappers.directionMapper.has(entity)) {
 				DirectionComponent dir = Mappers.directionMapper.get(entity);
-				if (dir.getDegrees() > -90 && dir.getDegrees() < 90) {
+				if (dir.getDegrees() > -135 && dir.getDegrees() < -45) {
+					currFrame = anim.map.walkUp().getKeyFrame(anim.stateTime, true);
+				} else if (dir.getDegrees() > -45 && dir.getDegrees() < 45) {
+					currFrame = anim.map.walkLeft().getKeyFrame(anim.stateTime, true);
 					currFrame.flip(!currFrame.isFlipX(), false);
+				} else if (dir.getDegrees() > 45 && dir.getDegrees() < 135) {
+					currFrame = anim.map.walkDown().getKeyFrame(anim.stateTime, true);
+					currFrame.flip(currFrame.isFlipX(), false);
 				} else {
+					currFrame = anim.map.walkRight().getKeyFrame(anim.stateTime, true);
 					currFrame.flip(currFrame.isFlipX(), false);
 				}
 			}

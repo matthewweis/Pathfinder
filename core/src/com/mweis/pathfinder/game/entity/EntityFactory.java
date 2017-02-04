@@ -10,6 +10,7 @@ import com.mweis.pathfinder.engine.entity.components.DirectionComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.entity.components.SpeedComponent;
 import com.mweis.pathfinder.engine.entity.components.SpriteComponent;
+import com.mweis.pathfinder.engine.views.AnimationMap;
 
 public class EntityFactory {
 	
@@ -23,21 +24,21 @@ public class EntityFactory {
 		return entity;
 	}
 	
-	public static Entity spawnTestEntity(float x, float y, float speed, Animation<TextureRegion> animation, Engine engine) {
+	public static Entity spawnTestEntity(float x, float y, float speed, AnimationMap map, Engine engine) {
 		Entity entity = new Entity();
 		entity.add(new DirectionComponent());
 		entity.add(new PositionComponent(x, y));
-		entity.add(new AnimationComponent(animation));
+		entity.add(new AnimationComponent(map));
 		entity.add(new SpeedComponent(speed));
 		engine.addEntity(entity);
 		return entity;
 	}
 	
-	public static Entity spawnTestEntity(float x, float y, float speed, Animation<TextureRegion> animation, float originX, float originY, Engine engine) {
+	public static Entity spawnTestEntity(float x, float y, float speed, AnimationMap map, float originX, float originY, Engine engine) {
 		Entity entity = new Entity();
 		entity.add(new DirectionComponent());
 		entity.add(new PositionComponent(x, y));
-		entity.add(new AnimationComponent(animation, originX, originY));
+		entity.add(new AnimationComponent(map, originX, originY));
 		entity.add(new SpeedComponent(speed));
 		engine.addEntity(entity);
 		return entity;

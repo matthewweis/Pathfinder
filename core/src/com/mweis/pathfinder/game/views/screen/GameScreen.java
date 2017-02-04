@@ -22,6 +22,7 @@ import com.mweis.pathfinder.engine.entity.systems.MovementSystem;
 import com.mweis.pathfinder.engine.entity.systems.PlayerInputSystem;
 import com.mweis.pathfinder.engine.entity.systems.RenderingSystem;
 import com.mweis.pathfinder.engine.util.Debug;
+import com.mweis.pathfinder.engine.views.AnimationMap;
 import com.mweis.pathfinder.engine.views.ResourceManager;
 import com.mweis.pathfinder.game.entity.EntityFactory;
 
@@ -61,7 +62,52 @@ public class GameScreen implements Screen {
 		
 		Animation<TextureRegion> walk = new Animation<TextureRegion>(0.25f, walkFrames);
 //		sprite.setSize(50, 50);
-		player = EntityFactory.spawnTestEntity(0.0f, 0.0f, 40.0f, walk,
+		
+		AnimationMap map = new AnimationMap() {
+			
+			@Override
+			public Animation<TextureRegion> walkUp() {
+				TextureRegion[] frames = {tmp[1][2], tmp[1][3], tmp[1][4]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> walkDown() {
+				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> walkLeft() {
+				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> walkRight() {
+				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> crawlLeft() {
+				TextureRegion[] frames = {tmp[1][0], tmp[1][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> crawlRight() {
+				TextureRegion[] frames = {tmp[1][0], tmp[1][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> attack() {
+				TextureRegion[] frames = {tmp[0][3], tmp[0][4]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> _default() {
+				TextureRegion[] frames = {tmp[0][0]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+		};
+		
+		player = EntityFactory.spawnTestEntity(0.0f, 0.0f, 40.0f, map,
 				walkSheet.getWidth() / (FRAME_COLS * 2), walkSheet.getHeight() / (FRAME_ROWS * 2), engine);
 		
 		setupInput();
