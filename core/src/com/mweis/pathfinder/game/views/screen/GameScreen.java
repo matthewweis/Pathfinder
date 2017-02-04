@@ -46,69 +46,7 @@ public class GameScreen implements Screen {
 		engine.addSystem(new RenderingSystem(batch));
 		engine.addSystem(new PlayerInputSystem());
 		
-		// init player here due to sprite loading in method
-//		Sprite sprite = ResourceManager.getSprite("sprite1");
-		
-		// eventually want to mod resource manager so u can make multiple frames out of 1 texture easily)
-		Texture walkSheet = ResourceManager.getTexture("mage");
-		final int FRAME_COLS = 5;
-		final int FRAME_ROWS = 5;
-		TextureRegion[][] tmp = TextureRegion.split(walkSheet, walkSheet.getWidth() / FRAME_COLS, walkSheet.getHeight() / FRAME_ROWS);
-		
-		TextureRegion[] walkFrames = new TextureRegion[3];
-        walkFrames[0] = tmp[0][0];
-        walkFrames[1] = tmp[0][1];
-        walkFrames[2] = tmp[0][2];
-		
-		Animation<TextureRegion> walk = new Animation<TextureRegion>(0.25f, walkFrames);
-//		sprite.setSize(50, 50);
-		
-		AnimationMap map = new AnimationMap() {
-			
-			@Override
-			public Animation<TextureRegion> walkUp() {
-				TextureRegion[] frames = {tmp[1][2], tmp[1][3], tmp[1][4]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-			@Override
-			public Animation<TextureRegion> walkDown() {
-				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][1]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-			@Override
-			public Animation<TextureRegion> walkLeft() {
-				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][1]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-			@Override
-			public Animation<TextureRegion> walkRight() {
-				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][1]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-			@Override
-			public Animation<TextureRegion> crawlLeft() {
-				TextureRegion[] frames = {tmp[1][0], tmp[1][1]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-			@Override
-			public Animation<TextureRegion> crawlRight() {
-				TextureRegion[] frames = {tmp[1][0], tmp[1][1]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-			@Override
-			public Animation<TextureRegion> attack() {
-				TextureRegion[] frames = {tmp[0][3], tmp[0][4]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-			@Override
-			public Animation<TextureRegion> _default() {
-				TextureRegion[] frames = {tmp[0][0]};
-				return new Animation<TextureRegion>(0.25f, frames);
-			}
-		};
-		
-		player = EntityFactory.spawnTestEntity(0.0f, 0.0f, 40.0f, map,
-				walkSheet.getWidth() / (FRAME_COLS * 2), walkSheet.getHeight() / (FRAME_ROWS * 2), engine);
+		player = EntityFactory.spawnMage(0.0f, 0.0f, engine);
 		
 		setupInput();
 	}
@@ -131,7 +69,6 @@ public class GameScreen implements Screen {
             cam.translate(0, 3, 0);
             //If the UP Key is pressed, translate the camera 3 units in the Y-Axis
         }
-        
         if (Gdx.input.isKeyPressed(Input.Keys.W)) {
             cam.rotate(-0.2f, 0, 0, 1);
             //If the W Key is pressed, rotate the camera by -rotationSpeed around the Z-Axis
