@@ -34,8 +34,9 @@ public class ResourceManager {
 		textures.put(id, t);
 	}
 	
+	// direct return can cause problems if sprites are scaled
 	public static Sprite getSprite(String id) {
-		return new Sprite(sprites.get(id));
+		return sprites.get(id);
 	}
 	
 	public static Texture getTexture(String id) {

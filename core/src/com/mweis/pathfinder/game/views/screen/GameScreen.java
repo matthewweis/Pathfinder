@@ -9,8 +9,11 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
@@ -35,16 +38,31 @@ public class GameScreen implements Screen {
 		Debug.isDebugMode = true;
 		
 		// ADD SPRITES
-		ResourceManager.loadSprite("sprite1", "badlogic.jpg");
+//		ResourceManager.loadSprite("sprite1", "badlogic.jpg");
+		ResourceManager.loadTexture("mage", "mage.png");
 		
 		engine.addSystem(new MovementSystem(engine));
 		engine.addSystem(new RenderingSystem(batch));
 		engine.addSystem(new PlayerInputSystem());
 		
 		// init player here due to sprite loading in method
-		Sprite sprite = ResourceManager.getSprite("sprite1");
-		sprite.setSize(50, 50);
-		player = EntityFactory.spawnTestEntity(0.0f, 0.0f, 300.0f, sprite, engine);
+//		Sprite sprite = ResourceManager.getSprite("sprite1");
+		
+		// eventually want to mod resource manager so u can make multiple frames out of 1 texture easily)
+		Texture walkSheet = ResourceManager.getTexture("mage");
+		final int FRAME_COLS = 5;
+		final int FRAME_ROWS = 5;
+		TextureRegion[][] tmp = TextureRegion.split(walkSheet, walkSheet.getWidth() / FRAME_COLS, walkSheet.getHeight() / FRAME_ROWS);
+		
+		TextureRegion[] walkFrames = new TextureRegion[3];
+        walkFrames[0] = tmp[0][0];
+        walkFrames[1] = tmp[0][1];
+        walkFrames[2] = tmp[0][2];
+		
+		Animation<TextureRegion> walk = new Animation<TextureRegion>(0.25f, walkFrames);
+//		sprite.setSize(50, 50);
+		player = EntityFactory.spawnTestEntity(0.0f, 0.0f, 40.0f, walk,
+				walkSheet.getWidth() / (FRAME_COLS * 2), walkSheet.getHeight() / (FRAME_ROWS * 2), engine);
 		
 		setupInput();
 	}
@@ -80,16 +98,17 @@ public class GameScreen implements Screen {
         final float camEdge = 0.07f; // 7% of the screen can be used for cam movement
         final float xCameraBound = Gdx.graphics.getWidth() * camEdge;
         final float yCameraBound = Gdx.graphics.getHeight() * camEdge;
+        final int camSpeed = 3;
         
         if (Gdx.input.getX() < xCameraBound) {
-        	cam.translate(-10, 0, 0);
+        	cam.translate(-camSpeed, 0, 0);
         } else if (Gdx.input.getX() > Gdx.graphics.getWidth() - xCameraBound) {
-        	cam.translate(10, 0, 0);
+        	cam.translate(camSpeed, 0, 0);
         }
         if (Gdx.input.getY() < yCameraBound) {
-        	cam.translate(0, 10, 0);
+        	cam.translate(0, camSpeed, 0);
         } else if (Gdx.input.getY() > Gdx.graphics.getHeight() - yCameraBound) {
-        	cam.translate(0, -10, 0);
+        	cam.translate(0, -camSpeed, 0);
         }
 	}
 	
@@ -111,7 +130,7 @@ public class GameScreen implements Screen {
                 	vec.x = x;
                 	vec.y = y;
                 	Vector3 mouse = cam.unproject(vec);
-                	System.out.println(x + ", " + y);
+                	System.out.println(mouse.x + ", " + mouse.y);
                 }
                 return false;
             }
@@ -193,6 +212,7 @@ public class GameScreen implements Screen {
 	@Override
 	public void dispose() {
 		System.out.println("dispose");
+		ResourceManager.dispose();
 	}
 	
 }

@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.math.Vector2;
 import com.mweis.pathfinder.engine.input.InputHandler;
+import com.mweis.pathfinder.engine.views.ResourceManager;
 import com.mweis.pathfinder.engine.views.ScreenManager;
 import com.mweis.pathfinder.game.views.screen.GameScreen;
 
