@@ -1,28 +1,27 @@
 package com.mweis.pathfinder.game.views.screen;
 
-import java.util.Arrays;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.OrthographicCamera;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
+import com.mweis.pathfinder.engine.entity.components.AnimationComponent;
+import com.mweis.pathfinder.engine.entity.components.CollisionComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
+import com.mweis.pathfinder.engine.entity.systems.CollisionSystem;
 import com.mweis.pathfinder.engine.entity.systems.MovementSystem;
 import com.mweis.pathfinder.engine.entity.systems.PlayerInputSystem;
 import com.mweis.pathfinder.engine.entity.systems.RenderingSystem;
 import com.mweis.pathfinder.engine.util.Debug;
-import com.mweis.pathfinder.engine.views.AnimationMap;
+import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.views.ResourceManager;
 import com.mweis.pathfinder.game.entity.EntityFactory;
 
@@ -30,24 +29,35 @@ public class GameScreen implements Screen {
 	Engine engine = new Engine();
 	SpriteBatch batch = new SpriteBatch();
 	OrthographicCamera cam = new OrthographicCamera(1920.0f, 1080.0f);//(100.0f, 100.0f);
-//	InputHandler input = new InputHandler();
 	Entity player = null;
+	Entity testDummy = null;
+	CollisionSystem cs = null; // TEMP FOR COLL DEBUG
 	
 	@Override
 	public void show() {
 		System.out.println("show");
 		Debug.isDebugMode = true;
 		
-		// ADD SPRITES
-//		ResourceManager.loadSprite("sprite1", "badlogic.jpg");
+		// load textures
 		ResourceManager.loadTexture("mage", "mage.png");
 		
+		cs = new CollisionSystem(engine); // TEMP FOR COLL DEBUG
+		
+		// add systems
 		engine.addSystem(new MovementSystem(engine));
+		engine.addSystem(cs); // TEMP FOR COLL DEBUG
 		engine.addSystem(new RenderingSystem(batch));
 		engine.addSystem(new PlayerInputSystem());
 		
-		player = EntityFactory.spawnMage(0.0f, 0.0f, engine);
+		cs.update(cam.combined);
 		
+		// attach entity listeners
+		
+		// add entities
+		player = EntityFactory.spawnMage(0.0f, 0.0f, 40.0f, 30.0f, 30.0f, engine);
+		testDummy = EntityFactory.spawnMage(100.0f, 0.0f, 40.0f, 30.0f, 30.0f, engine);
+		
+		// setup input (this class is the listener)
 		setupInput();
 	}
 	
@@ -78,20 +88,25 @@ public class GameScreen implements Screen {
             //If the E Key is pressed, rotate the camera by rotationSpeed around the Z-Axis
         }
         
-        final float camEdge = 0.07f; // 7% of the screen can be used for cam movement
-        final float xCameraBound = Gdx.graphics.getWidth() * camEdge;
-        final float yCameraBound = Gdx.graphics.getHeight() * camEdge;
-        final int camSpeed = 3;
-        
-        if (Gdx.input.getX() < xCameraBound) {
-        	cam.translate(-camSpeed, 0, 0);
-        } else if (Gdx.input.getX() > Gdx.graphics.getWidth() - xCameraBound) {
-        	cam.translate(camSpeed, 0, 0);
-        }
-        if (Gdx.input.getY() < yCameraBound) {
-        	cam.translate(0, camSpeed, 0);
-        } else if (Gdx.input.getY() > Gdx.graphics.getHeight() - yCameraBound) {
-        	cam.translate(0, -camSpeed, 0);
+        // make space lock camera on player, otherwise allow free movement
+        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+        	cam.position.set(new Vector3(Mappers.positionMapper.get(player).position, 0));
+        } else {
+        	final float camEdge = 0.07f; // 7% of the screen can be used for cam movement
+            final float xCameraBound = Gdx.graphics.getWidth() * camEdge;
+            final float yCameraBound = Gdx.graphics.getHeight() * camEdge;
+            final int camSpeed = 3;
+            
+            if (Gdx.input.getX() < xCameraBound) {
+            	cam.translate(-camSpeed, 0, 0);
+            } else if (Gdx.input.getX() > Gdx.graphics.getWidth() - xCameraBound) {
+            	cam.translate(camSpeed, 0, 0);
+            }
+            if (Gdx.input.getY() < yCameraBound) {
+            	cam.translate(0, camSpeed, 0);
+            } else if (Gdx.input.getY() > Gdx.graphics.getHeight() - yCameraBound) {
+            	cam.translate(0, -camSpeed, 0);
+            }
         }
 	}
 	
@@ -105,7 +120,7 @@ public class GameScreen implements Screen {
                 	vec.x = x;
                 	vec.y = y;
                 	Vector3 mouse = cam.unproject(vec);
-                	Vector2 pv = player.getComponent(PositionComponent.class).position;
+                	Vector2 pv = Mappers.positionMapper.get(player).position;
         			player.add(new MovementCommand(pv.x, pv.y, mouse.x, mouse.y));
                     return true;
                 }
@@ -157,15 +172,19 @@ public class GameScreen implements Screen {
 		
     }
 	
+	/*
+	 * Called 60 times per second as per LibGdx specification.
+	 */
 	@Override
 	public void render(float delta) {
 		handleInput(); // will make changes to camera
 	    cam.update();
+	    cs.update(cam.combined); // TEMP FOR COLL DEBUG
 	    batch.setProjectionMatrix(cam.combined);
 		
-		batch.begin(); // eventually rendering system can handle all this
+//		batch.begin(); // eventually rendering system can handle all this
 		engine.update(delta);
-		batch.end();
+//		batch.end();	
 	}
 
 	@Override

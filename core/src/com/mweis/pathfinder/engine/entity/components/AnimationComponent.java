@@ -1,25 +1,22 @@
 package com.mweis.pathfinder.engine.entity.components;
 
 import com.badlogic.ashley.core.Component;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.Vector2;
 import com.mweis.pathfinder.engine.views.AnimationMap;
 
 public class AnimationComponent implements Component {
 	public AnimationMap map;
 	public float stateTime;
-	public final boolean hasOrigins;
-	public float originX, originY;
+	public Vector2 offset;
+	public float width, height;
 	
-	public AnimationComponent(AnimationMap map) {
+	/*
+	 * Assumes offsets are same for all frames, eventually may need to make method which allows a list of offsets
+	 */
+	public AnimationComponent(AnimationMap map, Vector2 offset, float width, float height) {
 		this.map = map;
-		this.hasOrigins = false;
-	}
-	
-	public AnimationComponent(AnimationMap map, float originX, float originY) {
-		this.map = map;
-		this.originX = originX;
-		this.originY = originY;
-		this.hasOrigins = true;
+		this.offset = offset;
+		this.width = width;
+		this.height = height;
 	}
 }

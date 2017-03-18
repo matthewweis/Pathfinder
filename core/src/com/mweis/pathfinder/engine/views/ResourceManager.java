@@ -3,6 +3,7 @@ package com.mweis.pathfinder.engine.views;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
@@ -34,7 +35,7 @@ public class ResourceManager {
 		textures.put(id, t);
 	}
 	
-	// direct return can cause problems if sprites are scaled
+	// direct return can cause problems if sprites are scaled or modified
 	public static Sprite getSprite(String id) {
 		return sprites.get(id);
 	}
@@ -44,19 +45,13 @@ public class ResourceManager {
 	}
 	
 	public static void dispose() {
-		Iterator it = textures.entrySet().iterator();
+		// Iterator avoids ConcurrentModificationException
+		Iterator<Entry<String, Texture>> it = textures.entrySet().iterator();
 	    while (it.hasNext()) {
-	        Map.Entry pair = (Map.Entry)it.next();
+	        Map.Entry<String, Texture> pair = (Map.Entry<String, Texture>)it.next();
 	        ((Texture)pair.getValue()).dispose();
-	        it.remove(); // avoids a ConcurrentModificationException
+	        it.remove();
 	    }
-	    /*// THIS IS ONLY NEEDED WHEN FONTS ARE ADDED
-	    it = fonts.entrySet().iterator();
-	    while (it.hasNext()) {
-	        Map.Entry pair = (Map.Entry)it.next();
-	        ((BitmapFont)pair.getValue()).dispose();
-	        it.remove(); // avoids a ConcurrentModificationException
-	        */
 	}
 	
 	private ResourceManager() {};

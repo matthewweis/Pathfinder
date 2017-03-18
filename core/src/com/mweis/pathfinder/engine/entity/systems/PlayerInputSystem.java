@@ -12,7 +12,7 @@ import com.mweis.pathfinder.engine.util.SystemPriorities;
 public class PlayerInputSystem extends IteratingSystem {
 	
 	public PlayerInputSystem() {
-		super(Family.all(InputComponent.class).get(), 0);
+		super(Family.all(InputComponent.class).get(), SystemPriorities.INPUT.get());
 //		super(Family.all(InputComponent.class).get(), SystemPriorities.INPUT.get());
 	}
 

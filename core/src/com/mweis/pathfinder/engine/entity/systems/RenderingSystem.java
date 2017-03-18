@@ -6,6 +6,7 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.mweis.pathfinder.engine.entity.components.AnimationComponent;
+import com.mweis.pathfinder.engine.entity.components.CollisionComponent;
 import com.mweis.pathfinder.engine.entity.components.DirectionComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.entity.components.SpriteComponent;
@@ -13,7 +14,7 @@ import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
 
 public class RenderingSystem extends IteratingSystem {
-	SpriteBatch batch;
+	SpriteBatch batch; // later in the dev process we will want to calculate max entities and pass it to this batch for efficiency
 	
 	public RenderingSystem(SpriteBatch batch) {
 		super(Family.all(PositionComponent.class).one(SpriteComponent.class, AnimationComponent.class).get(), SystemPriorities.RENDERING.get());
@@ -26,6 +27,8 @@ public class RenderingSystem extends IteratingSystem {
 		
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
+		batch.begin();
+//		System.out.println("iterating system update on entity " + entity.toString());
 		PositionComponent position = Mappers.positionMapper.get(entity);
 		
 		if (Mappers.spriteMapper.has(entity)) {
@@ -34,14 +37,12 @@ public class RenderingSystem extends IteratingSystem {
 			if (sprite.sprite != null) {
 				sprite.sprite.setCenter(position.position.x, position.position.y); // set sprite pos to entity pos
 			}
-//			sprite.sprite.setOrigin(position.position.x, position.position.y);
 			
-//			if (sprite.sprite != null) {
+			if (sprite.sprite != null) {
 				if (sprite.sprite.getTexture() != null) {
 					sprite.sprite.draw(batch);
-//					batch.draw(sprite, position.position.x, position.position.y);
 				}
-//			}
+			}
 		} else if (Mappers.animationMapper.has(entity)) {
 			AnimationComponent anim = Mappers.animationMapper.get(entity);
 			
@@ -49,35 +50,30 @@ public class RenderingSystem extends IteratingSystem {
 			if (Mappers.movementMapper.has(entity)) {
 				anim.stateTime += deltaTime; // only update movement when walking
 			} else {
-				anim.stateTime = 0.0f; // otherwise "reset" to standing pose
+				anim.stateTime = 0.0f; // otherwise "reset" to standing frame
 			}
 			
 			TextureRegion currFrame = anim.map._default().getKeyFrame(anim.stateTime, true);
 			
-			
 			if (Mappers.directionMapper.has(entity)) {
 				DirectionComponent dir = Mappers.directionMapper.get(entity);
-				if (dir.getDegrees() > -135 && dir.getDegrees() < -45) {
+				if (dir.getDegrees() > -135 && dir.getDegrees() < -45) { // up
 					currFrame = anim.map.walkUp().getKeyFrame(anim.stateTime, true);
-				} else if (dir.getDegrees() > -45 && dir.getDegrees() < 45) {
+				} else if (dir.getDegrees() > -45 && dir.getDegrees() < 45) { // left
 					currFrame = anim.map.walkLeft().getKeyFrame(anim.stateTime, true);
 					currFrame.flip(!currFrame.isFlipX(), false);
-				} else if (dir.getDegrees() > 45 && dir.getDegrees() < 135) {
+				} else if (dir.getDegrees() > 45 && dir.getDegrees() < 135) { // down
 					currFrame = anim.map.walkDown().getKeyFrame(anim.stateTime, true);
 					currFrame.flip(currFrame.isFlipX(), false);
-				} else {
+				} else { // right
 					currFrame = anim.map.walkRight().getKeyFrame(anim.stateTime, true);
 					currFrame.flip(currFrame.isFlipX(), false);
 				}
 			}
 			
-//			batch.draw(currFrame, position.position.x, position.position.y, 0.0f, 0.0f, currFrame.getRegionWidth(), 
-//					currFrame.getRegionHeight(), 1.0f, 1.0f, rotation);
-			if (anim.hasOrigins) {
-				batch.draw(currFrame, position.position.x - (anim.originX / 2), position.position.y - (anim.originY / 2), anim.originX, anim.originY);
-			} else {
-				batch.draw(currFrame, position.position.x, position.position.y);
-			}
+			// draw sprite s.t. position is its midpoint
+			batch.draw(currFrame, position.position.x - anim.offset.x, position.position.y - anim.offset.y, anim.width, anim.height);
+			batch.end();
 		}
 	}
 }
