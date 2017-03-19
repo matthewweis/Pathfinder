@@ -37,6 +37,9 @@ public class MovementSystem extends IteratingSystem {
 		// done moving check and dir check
 		if (move.alpha >= 1.0f) { // done with lerp, must rm move command
 			entity.remove(MovementCommand.class);
+			// if we don't ensure the position is right then every lerp gives *slightly* different results
+			position.position.x = move.end.x;
+			position.position.y = move.end.y;
 		} else if (Mappers.directionMapper.has(entity)) {
 			DirectionComponent dir = Mappers.directionMapper.get(entity);
 			dir.setAngleRadians((float) Math.atan2(position.position.y - move.end.y, position.position.x - move.end.x));

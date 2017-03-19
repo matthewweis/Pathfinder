@@ -21,7 +21,6 @@ public class CollisionSystem extends IteratingSystem {
 	
 	private Engine engine;
 	private Family family;
-	
 	private Matrix4 combined; // TEMP FOR COLL DEBUG
 	
 	public CollisionSystem(Engine engine) {
@@ -59,13 +58,26 @@ public class CollisionSystem extends IteratingSystem {
 						Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.max.x, b1.min.y), combined);
 						Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.min.x, b1.max.y), combined);
 						
-						if (b1.intersects(b2)) {
+						boolean alreadyOverlapping = c1.collisions.contains(e2);
+						boolean overlapping = b1.intersects(b2);
+						
+						/*
+						 * WARNING!!!!!
+						 * IF AN ENTITY'S isCollider BOOL CHANGES THEN IT MIGHT REMAIN ON THE COLLS LIST LONGER THAN IT SHOULD
+						 * THIS MEANS ENTITIYS COULD ACCIDENTLY OVERLAP. THIS WILL NEED TO CHANGE THEN SPATIAL PARTITIONING IS INTRODUCED
+						 */
+						
+						
+						if (overlapping && !alreadyOverlapping) {
 							// only handle 1-way collision because this algorithm will check twice
 							// can be improved with for i=1..n, j=i+1..n
 							c1.selfBehavior(e1);
 							if (c2.isSubjectToInfluence) {
 								c1.perscribeBehavior(e2);
 							}
+							c1.collisions.add(e2);
+						} else if (!overlapping && alreadyOverlapping) {
+							c1.collisions.remove(e2);
 						}
 					}
 				}

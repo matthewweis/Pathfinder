@@ -54,8 +54,8 @@ public class GameScreen implements Screen {
 		// attach entity listeners
 		
 		// add entities
-		player = EntityFactory.spawnMage(0.0f, 0.0f, 40.0f, 30.0f, 30.0f, engine);
-		testDummy = EntityFactory.spawnMage(100.0f, 0.0f, 40.0f, 30.0f, 30.0f, engine);
+		player = EntityFactory.spawnMage(0.0f, 0.0f, 40.0f, 30.0f, engine);
+		testDummy = EntityFactory.spawnMage(100.0f, 0.0f, 40.0f, 60.0f, engine);
 		
 		// setup input (this class is the listener)
 		setupInput();
@@ -86,6 +86,11 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyPressed(Input.Keys.E)) {
             cam.rotate(0.2f, 0, 0, 1);
             //If the E Key is pressed, rotate the camera by rotationSpeed around the Z-Axis
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.S)) {
+        	if (Mappers.movementMapper.has(player)) {
+        		player.remove(MovementCommand.class);
+        	}
         }
         
         // make space lock camera on player, otherwise allow free movement

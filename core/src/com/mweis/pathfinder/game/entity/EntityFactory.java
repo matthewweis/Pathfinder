@@ -17,18 +17,23 @@ import com.mweis.pathfinder.engine.entity.components.DirectionComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.entity.components.SpeedComponent;
 import com.mweis.pathfinder.engine.entity.components.SpriteComponent;
+import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
 import com.mweis.pathfinder.engine.entity.systems.CollisionSystem;
+import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.views.AnimationMap;
 import com.mweis.pathfinder.engine.views.ResourceManager;
 
 public class EntityFactory {
 	
-	public static Entity spawnMage(float x, float y, float speed, float width, float height, Engine engine) {
+	public static Entity spawnMage(float x, float y, float speed, float scale, Engine engine) {
 		Texture walkSheet = ResourceManager.getTexture("mage");
 		final int FRAME_COLS = 5;
 		final int FRAME_ROWS = 5;
 		
 		TextureRegion[][] tmp = TextureRegion.split(walkSheet, walkSheet.getWidth() / FRAME_COLS, walkSheet.getHeight() / FRAME_ROWS);
+		
+		float ratioY = scale / (walkSheet.getHeight() / FRAME_ROWS);
+		float ratioX = scale / (walkSheet.getWidth() / FRAME_COLS);
 		
 		AnimationMap map = new AnimationMap() {
 			
@@ -78,16 +83,31 @@ public class EntityFactory {
 		Entity entity = new Entity();
 		entity.add(new DirectionComponent());
 		entity.add(new PositionComponent(x, y));
-		float oy = walkSheet.getWidth() / (FRAME_COLS * 20); // just a little above feet
-		float ox = walkSheet.getHeight() / (FRAME_ROWS * 4); // x is midpoint
+		System.out.println(ratioX + ", " + ratioY);
+		float anim_ox = ratioX * walkSheet.getHeight() / (FRAME_ROWS * 2); // x is midpoint
+		float anim_oy = ratioY * walkSheet.getWidth() / (FRAME_COLS * 10); // just a little above feet
 		
-		entity.add(new AnimationComponent(map, new Vector2(ox, oy), width, height));
+		entity.add(new AnimationComponent(map, new Vector2(anim_ox, anim_oy), scale, scale));
 		entity.add(new SpeedComponent(speed));
-		entity.add(new CollisionComponent(null, new Behavior() {
+		
+//		System.out.println(walkSheet.getWidth() + ", " + walkSheet.getHeight());
+		// each sprite is in a 60x60 box
+		
+		float coll_ox = scale * 0.1f;//walkSheet.getHeight() / (FRAME_ROWS * 8);
+		float coll_oy = scale * 0.10f;//walkSheet.getWidth() / (FRAME_COLS * 20);
+		
+		entity.add(new CollisionComponent(new Behavior() {
+			@Override
+			public void perscribeBehavior(Entity entity) {
+				if (Mappers.movementMapper.has(entity)) { // stop moving on collision
+					entity.remove(MovementCommand.class);
+	        	}
+			}
+		}, new Behavior() {
 			@Override
 			public void perscribeBehavior(Entity entity) {
 				System.out.println("mage pokes entity " + entity.toString().substring(31) + ", that'll show him!");
-			} }, new Vector2(ox, oy), width, height));
+			} }, new Vector2(coll_ox, coll_oy), scale * 0.25f, scale * 0.75f));
 		engine.addEntity(entity);
 		
 		return entity;

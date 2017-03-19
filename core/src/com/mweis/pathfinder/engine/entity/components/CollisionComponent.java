@@ -1,5 +1,7 @@
 package com.mweis.pathfinder.engine.entity.components;
 
+import java.util.ArrayList;
+
 import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Vector2;
@@ -10,6 +12,8 @@ import com.mweis.pathfinder.engine.entity.Behavior;
 public class CollisionComponent implements Component {
 	private float width, height;
 	private Behavior ISelf, IPerscription; // leave behaviors null if nothing should occur
+	public ArrayList<Entity> collisions = new ArrayList<Entity>(); // keep tracks of entities currently overlapping with this
+	
 	public Vector2 offset;
 	
 	/*
