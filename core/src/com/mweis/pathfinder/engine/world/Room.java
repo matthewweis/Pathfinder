@@ -75,12 +75,12 @@ public class Room implements Comparable<Room> {
 		return _bottom;
 	}
 	
-	public double getCenterX() {
-		return (_left+_right)/2.0;
+	public float getCenterX() {
+		return (_left+_right)/2.0f;
 	}
 	
-	public double getCenterY() {
-		return (_top+_bottom)/2.0;
+	public float getCenterY() {
+		return (_top+_bottom)/2.0f;
 	}
 	
 	public void shift(int x, int y) {

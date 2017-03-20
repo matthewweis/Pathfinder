@@ -30,6 +30,7 @@ public class Debug {
 
     public static void DrawDebugLine(Vector2 start, Vector2 end, int lineWidth, Color color, Matrix4 projectionMatrix)
     {
+    	System.out.println("drawing debug line");
         Gdx.gl.glLineWidth(lineWidth);
         debugRenderer.setProjectionMatrix(projectionMatrix);
         debugRenderer.begin(ShapeRenderer.ShapeType.Line);
@@ -41,6 +42,7 @@ public class Debug {
 
     public static void DrawDebugLine(Vector2 start, Vector2 end, Matrix4 projectionMatrix)
     {
+    	System.out.println("drawing debug line");
         Gdx.gl.glLineWidth(2);
         debugRenderer.setProjectionMatrix(projectionMatrix);
         debugRenderer.begin(ShapeRenderer.ShapeType.Line);

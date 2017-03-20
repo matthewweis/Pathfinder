@@ -11,6 +11,7 @@ import com.mweis.pathfinder.engine.entity.components.SpeedComponent;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
+import com.mweis.pathfinder.engine.world.Dungeon;
 
 /*
  * The MovementSystem takes all entities which (AT ANY GIVEN TIME) have Movement, Position, and Speed and handles
@@ -33,7 +34,7 @@ public class MovementSystem extends IteratingSystem {
 		
 		move.alpha += (speed.speed / move.dist) * deltaTime;
 		position.position.set(move.start).lerp(move.end, move.alpha);
-		
+				
 		// done moving check and dir check
 		if (move.alpha >= 1.0f) { // done with lerp, must rm move command
 			entity.remove(MovementCommand.class);

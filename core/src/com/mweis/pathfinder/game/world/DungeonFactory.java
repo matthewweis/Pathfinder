@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.mweis.pathfinder.engine.world.Dungeon;
 import com.mweis.pathfinder.engine.world.Room;
 
 /*
@@ -22,18 +23,23 @@ public class DungeonFactory {
 	private static Random random = new Random();
 	
 	private static final int padding = -1;
-
-	private static final int mapSize = 35*5;
-	private static final int minSideLength = 5*5;
-	private static final int maxSideLength = 15*5;
-	private static final int corridorCount = 35*3;
-	private static final int roomCount = 80*5;
-	private static final double minRatio = 1.0;
-	private static final double maxRatio = 1.5;
-	private static final double touchedRoomChance = 1;
 	
+	/*
+	 * All dungeons hold their own copy of these, because eventually we may eventually want variance between dungeons.
+	 */
+	private static int mapSize = 35*5;
+	private static int minSideLength = 5*5;
+	private static int maxSideLength = 15*5;
+	private static int hallWidth = 10;
+	private static int corridorCount = 35*2;
+	private static int roomCount = 80*7;
+	private static float minRatio = 1.0f;
+	private static float maxRatio = 1.5f;
+	private static float touchedRoomChance = 1.0f;
 	
-	public static List<List<Room>> generateDungeon() {
+	private static Room start, end;
+	
+	public static Dungeon generateDungeon() {
 		List<Room> rooms = createRooms();
 		seperateRooms(rooms);
 		List<Room> corridors = findCorridors(rooms);
@@ -45,15 +51,10 @@ public class DungeonFactory {
 		}
 		List<Room> untouched = removeUntouched(rooms, halls);
 		
-		Room start = null, end = null;
-		findStartAndEnd(corridors, start, end);
+		findStartAndEnd(corridors);
 		
-		List<List<Room>> ret = new ArrayList<List<Room>>();
-		ret.add(rooms);
-		ret.add(corridors);
-		ret.add(halls);
-//		ret.add(untouched);
-		return ret;
+		return new Dungeon(start, end, rooms, corridors, halls, graph, minSideLength,
+				maxSideLength, hallWidth, minRatio, maxRatio);
 	}
 	
 	private static List<Room> createRooms() {
@@ -187,11 +188,11 @@ public class DungeonFactory {
                 dy = (int) b.getCenterY()-y;
                 
                 if(random.nextInt(1) == 1) {
-                    halls.add(new Room(x, y, dx+1, 1));
-                    halls.add(new Room(x+dx, y, 1, dy));
+                    halls.add(new Room(x, y, dx+1, hallWidth));
+                    halls.add(new Room(x+dx, y, hallWidth, dy));
                 } else {
-                    halls.add(new Room(x, y+dy, dx+1, 1));
-                    halls.add(new Room(x, y, 1, dy));
+                    halls.add(new Room(x, y+dy, dx+1, hallWidth));
+                    halls.add(new Room(x, y, hallWidth, dy));
                 }
             }
         }
@@ -222,9 +223,9 @@ public class DungeonFactory {
     }
     
     /*
-     * Send list of corridors, and this will return the starting and ending rooms.
+     * Send list of corridors, and this will set the starting and ending rooms.
      */
-    private static void findStartAndEnd(List<Room> corridors, Room start, Room end) {
+    private static void findStartAndEnd(List<Room> corridors) {
         Room a, b;
         double maxDist = Double.MIN_VALUE, dist;
         for(int i = 0;i < corridors.size();i++) {

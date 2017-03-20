@@ -24,6 +24,7 @@ import com.mweis.pathfinder.engine.entity.systems.RenderingSystem;
 import com.mweis.pathfinder.engine.util.Debug;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.views.ResourceManager;
+import com.mweis.pathfinder.engine.world.Dungeon;
 import com.mweis.pathfinder.engine.world.Room;
 import com.mweis.pathfinder.game.entity.EntityFactory;
 import com.mweis.pathfinder.game.world.DungeonFactory;
@@ -34,12 +35,9 @@ public class GameScreen implements Screen {
 	SpriteBatch batch = new SpriteBatch();
 	OrthographicCamera cam = new OrthographicCamera(1920.0f, 1080.0f);//(100.0f, 100.0f);
 	Entity player = null;
-//	Entity testDummy = null;
 	CollisionSystem cs = null; // TEMP FOR COLL DEBUG
 	
-	Vector2[] testDungeon;
-	Rectangle[] testRooms;
-	List<List<Room>> rooms;
+	Dungeon dungeon;
 	
 	@Override
 	public void show() {
@@ -49,28 +47,31 @@ public class GameScreen implements Screen {
 		// load textures
 		ResourceManager.loadTexture("mage", "mage.png");
 		
+		long before = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+
+		// create world
+		dungeon = DungeonFactory.generateDungeon();
+		
+		long after = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+		System.out.println(before + ", " + after);
+		
 		// add systems
-		cs = new CollisionSystem(engine); // TEMP FOR COLL DEBUG
+		cs = new CollisionSystem(engine, dungeon); // TEMP FOR COLL DEBUG
 		
 		engine.addSystem(new MovementSystem(engine));
 		engine.addSystem(cs); // TEMP FOR COLL DEBUG
 		engine.addSystem(new RenderingSystem(batch));
 		engine.addSystem(new PlayerInputSystem());
-		
-		cs.update(cam.combined);
+		cs.update(cam.combined); // TEMP FOR COLL DEBUG
 		
 		// attach entity listeners
 		
 		// add entities
-		player = EntityFactory.spawnMage(0.0f, 0.0f, 12.8f, 6.0f, engine);
-//		testDummy = EntityFactory.spawnMage(100.0f, 0.0f, 8.8f, 9.0f, engine);
+		Vector2 spawn = new Vector2(dungeon.getStartRoom().getCenterX(), dungeon.getStartRoom().getCenterY());
+		player = EntityFactory.spawnMage(spawn.x, spawn.y, 12.8f, 6.0f, engine);
 		
 		// setup input (this class is the listener)
 		setupInput();
-		
-		testDungeon = DungeonFactoryOld.getRandomPointsInCircle(150, 90);
-		testRooms = DungeonFactoryOld.makeRectanglesAroundPoints(testDungeon, 14.0f, 30.0f);
-		rooms = DungeonFactory.generateDungeon();
 	}
 	
 	private void handleInput() {
@@ -179,7 +180,6 @@ public class GameScreen implements Screen {
 
 			@Override
 			public boolean scrolled(int amount) {
-				System.out.println(cam.zoom);
 				if (cam.zoom < 0.1f) {
 					cam.zoom += amount * 0.005f;
 				} else {
@@ -202,44 +202,8 @@ public class GameScreen implements Screen {
 	    cs.update(cam.combined); // TEMP FOR COLL DEBUG
 	    batch.setProjectionMatrix(cam.combined);
 	    
-	    ShapeRenderer sr = new ShapeRenderer();
-	    sr.setProjectionMatrix(cam.combined);
-	    sr.begin(ShapeRenderer.ShapeType.Filled);
-	    
-//	    for (Vector2 v : testDungeon) {
-//			sr.circle(v.x, v.y, 1.0f);
-//		}
-//	    for (Rectangle r : testRooms) {
-//	    	sr.rect(r.x, r.y, r.width, r.height);
-//	    }
-	    Color[] colors = {Color.BROWN, Color.GREEN, Color.RED, Color.TEAL};
-	    
-	    int i=0;
-	    for (List<Room> l : rooms) {
-	    	Color curr = sr.getColor();
-	    	sr.setColor(colors[(i++)%4]);
-	    	for (Room r : l) {
-	    		sr.rect(r.getLeft(), r.getBottom(), r.getWidth(), r.getHeight());
-	    	}
-	    }
-	    
-//	    if (overlap) {
-////	    	overlap = DungeonFactory.steerAwayOverlappingRectangles(testRooms);
-//	    	overlap = DungeonFactoryOld.seperateRooms(testRooms);
-////		    try {
-////				Thread.sleep(0L);
-////			} catch (InterruptedException e) {
-////				e.printStackTrace();
-////			}
-////	    	System.out.println(testRooms[0].toString());
-//	    }
-	    
-	    sr.end();
-	    
-	    
-//		batch.begin(); // eventually rendering system can handle all this
+	    dungeon.render(cam.combined);
 		engine.update(delta);
-//		batch.end();
 	}
 
 	@Override

@@ -16,17 +16,20 @@ import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.util.Debug;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
+import com.mweis.pathfinder.engine.world.Dungeon;
 
 public class CollisionSystem extends IteratingSystem {
 	
 	private Engine engine;
+	private Dungeon dungeon;
 	private Family family;
 	private Matrix4 combined; // TEMP FOR COLL DEBUG
 	
-	public CollisionSystem(Engine engine) {
+	public CollisionSystem(Engine engine, Dungeon dungeon) {
 		super(Family.all(CollisionComponent.class, PositionComponent.class).get(), SystemPriorities.DEFAULT.get());
 		this.engine = engine;
 		this.family = Family.all(CollisionComponent.class, PositionComponent.class).get();
+		this.dungeon = dungeon;
 	}
 	
 	public void update(Matrix4 combined) { // TEMP FOR COLL DEBUG
@@ -38,25 +41,37 @@ public class CollisionSystem extends IteratingSystem {
 		// horrible n^2 entity coll check. Temporary implementation
 		CollisionComponent c1 = Mappers.collisionMapper.get(e1);
 		
+		Vector2 p1 = Mappers.positionMapper.get(e1).position;
+		BoundingBox b1 = c1.getBoundingBox().mul(new Matrix4().trn(new Vector3(p1.x, p1.y, 0.0f)));
+//		if (dungeon.isColliding(b1)) {
+//			System.out.println("world coll");
+//			c1.selfBehavior(e1); // note this might not be what we always want. this is a temp implemention
+//		}
+		
+		Debug.DrawDebugLine(new Vector2(b1.min.x, b1.min.y), new Vector2(b1.min.x, b1.max.y), combined);
+		Debug.DrawDebugLine(new Vector2(b1.min.x, b1.min.y), new Vector2(b1.max.x, b1.min.y), combined);
+		Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.max.x, b1.min.y), combined);
+		Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.min.x, b1.max.y), combined);
+		
 		if (c1.isCollider) {
 			for (Entity e2 : engine.getEntitiesFor(family)) {
 				if (e1 != e2) {
 					CollisionComponent c2 = Mappers.collisionMapper.get(e2);
 					if (c2.isCollider) {
 						// pull each bounding box and transform it by position.
-						Vector2 p1 = Mappers.positionMapper.get(e1).position;
-						BoundingBox b1 = c1.getBoundingBox().mul(new Matrix4().trn(new Vector3(p1.x, p1.y, 0.0f)));
-						
+//						Vector2 p1 = Mappers.positionMapper.get(e1).position;
+//						BoundingBox b1 = c1.getBoundingBox().mul(new Matrix4().trn(new Vector3(p1.x, p1.y, 0.0f)));
+//						
 						Vector2 p2 = Mappers.positionMapper.get(e2).position;
 						BoundingBox b2 = c2.getBoundingBox().mul(new Matrix4().trn(new Vector3(p2.x, p2.y, 0.0f)));
 						
 //						System.out.println(b1.toString() + ", " + b2.toString());
 						
 						// TEMP FOR COLL DEBUG
-						Debug.DrawDebugLine(new Vector2(b1.min.x, b1.min.y), new Vector2(b1.min.x, b1.max.y), combined);
-						Debug.DrawDebugLine(new Vector2(b1.min.x, b1.min.y), new Vector2(b1.max.x, b1.min.y), combined);
-						Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.max.x, b1.min.y), combined);
-						Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.min.x, b1.max.y), combined);
+//						Debug.DrawDebugLine(new Vector2(b1.min.x, b1.min.y), new Vector2(b1.min.x, b1.max.y), combined);
+//						Debug.DrawDebugLine(new Vector2(b1.min.x, b1.min.y), new Vector2(b1.max.x, b1.min.y), combined);
+//						Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.max.x, b1.min.y), combined);
+//						Debug.DrawDebugLine(new Vector2(b1.max.x, b1.max.y), new Vector2(b1.min.x, b1.max.y), combined);
 						
 						boolean alreadyOverlapping = c1.collisions.contains(e2);
 						boolean overlapping = b1.intersects(b2);
