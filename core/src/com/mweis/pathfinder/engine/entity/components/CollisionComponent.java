@@ -24,6 +24,7 @@ public class CollisionComponent implements Component {
 		this.offset = offset;
 		this.width = width;
 		this.height = height;
+		updateBoundingBox();
 	}
 	
 	/*
@@ -31,19 +32,24 @@ public class CollisionComponent implements Component {
 	 * Width and Height are the dims of the bounding box.
 	 */
 	public CollisionComponent(Behavior selfBehavior, Behavior perscribeBehavior, Vector2 offset, float width, float height) {
-		this.width = width;
-		this.height = height;
-		this.offset = offset;
+		this(offset, width, height);
 		ISelf = selfBehavior;
 		IPerscription = perscribeBehavior;
 	}
 	
 	public void setWidth(float width) {
 		this.width = width;
+		updateBoundingBox();
 	}
 	
 	public void setHeight(float height) {
 		this.height = height;
+		updateBoundingBox();
+	}
+	
+	public void setOffset(Vector2 offset) {
+		this.offset = offset;
+		updateBoundingBox();
 	}
 	
 	/*
@@ -84,8 +90,12 @@ public class CollisionComponent implements Component {
 	 * Returns the NORMALIZED bounding box of this entity.
 	 * THIS SHOULD ALWAYS BE (0, 0, 0) to (width, height, 0) because the CollisionSystem will denormalize this box!
 	 */
+	public BoundingBox bbox;
 	public BoundingBox getBoundingBox() {
-		// normalized box
-		return new BoundingBox(new Vector3(-offset.x, -offset.y, 0.0f), new Vector3(width-offset.x, height-offset.y, 0.0f));
+		return bbox;
+	}
+	
+	private void updateBoundingBox() {
+		bbox = new BoundingBox(new Vector3(-offset.x, -offset.y, 0.0f), new Vector3(width-offset.x, height-offset.y, 0.0f));
 	}
 }
