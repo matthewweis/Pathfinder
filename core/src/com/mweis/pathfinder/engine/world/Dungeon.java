@@ -144,6 +144,16 @@ public class Dungeon {
 			int x = (i % partitionWidth) * unitsPerPartition, y = (i / partitionWidth) * unitsPerPartition;
 			sr.rect(x, y, unitsPerPartition, unitsPerPartition);
 		}
+		
+		
+		// DRAW GRAPH
+		sr.setColor(Color.PINK);
+		for (Room start : graph.keySet()) {
+			for (Room end : graph.get(start)) {
+				sr.line(start.getCenterX(), start.getCenterY(), end.getCenterX(), end.getCenterY());
+			}
+		}
+		
 		sr.end();
 	}
 	

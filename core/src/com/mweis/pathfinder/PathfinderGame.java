@@ -10,6 +10,7 @@ public class PathfinderGame implements ApplicationListener {
 
 	@Override
 	public void create() {
+		Gdx.graphics.setTitle("Pathfinder");
 		ScreenManager.setScreen(new GameScreen());		
 	}
 

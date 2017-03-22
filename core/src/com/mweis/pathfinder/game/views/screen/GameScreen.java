@@ -26,7 +26,7 @@ import com.mweis.pathfinder.game.world.DungeonFactory;
 public class GameScreen implements Screen {
 	Engine engine = new Engine();
 	SpriteBatch batch = new SpriteBatch();
-	OrthographicCamera cam = new OrthographicCamera(1920.0f, 1080.0f);//(100.0f, 100.0f);
+	OrthographicCamera cam = new OrthographicCamera(1280.0f, 720.0f);
 	Entity player, test = null;
 	CollisionSystem cs = null; // TEMP FOR COLL DEBUG
 	
@@ -98,6 +98,13 @@ public class GameScreen implements Screen {
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
         	if (Mappers.movementMapper.has(player)) {
         		player.remove(MovementCommand.class);
+        	}
+        }
+        if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
+        	if (Gdx.graphics.isFullscreen()) {
+        		Gdx.graphics.setWindowedMode(1280, 720);
+        	} else {
+        		Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
         	}
         }
         
