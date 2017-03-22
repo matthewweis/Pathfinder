@@ -1,19 +1,17 @@
 package com.mweis.pathfinder.engine.entity.components;
 
-import java.util.ArrayList;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.math.collision.BoundingBox;
+import com.badlogic.gdx.utils.Array;
 import com.mweis.pathfinder.engine.entity.ai.behavior.Behavior;
 
 public class CollisionComponent implements Component {
 	private Rectangle hitbox; // eventually may want multiple
 	private Behavior ISelf, IPerscription; // leave behaviors null if nothing should occur
-	public ArrayList<Entity> collisions = new ArrayList<Entity>(); // keep tracks of entities currently overlapping with this
+	public Array<Entity> collisions = new Array<Entity>(); // keep tracks of entities currently overlapping with this
 	
 	/*
 	 * Creates a CollisionComponent with no special behaviors.

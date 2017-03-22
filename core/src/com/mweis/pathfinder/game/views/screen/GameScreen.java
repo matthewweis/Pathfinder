@@ -202,12 +202,11 @@ public class GameScreen implements Screen {
 	 */
 	boolean overlap = true;
 	@Override
-	public void render(float delta) {
+	public void render(float delta) {		
 		handleInput(); // will make changes to camera
 	    cam.update();
 	    cs.update(cam.combined); // TEMP FOR COLL DEBUG
 	    batch.setProjectionMatrix(cam.combined);
-	    
 	    dungeon.render(cam.combined);
 		engine.update(delta);
 	}

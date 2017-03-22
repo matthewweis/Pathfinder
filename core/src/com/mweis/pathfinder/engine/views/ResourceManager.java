@@ -1,19 +1,17 @@
 package com.mweis.pathfinder.engine.views;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.ObjectMap.Entries;
 
 public class ResourceManager {
 	
-	private static final HashMap<String, Sprite> sprites = new HashMap<String, Sprite>();
-	private static final HashMap<String, Texture> textures = new HashMap<String, Texture>();
+	private static final ObjectMap<String, Sprite> sprites = new ObjectMap<String, Sprite>();
+	private static final ObjectMap<String, Texture> textures = new ObjectMap<String, Texture>();
 	
 	public static Sprite loadSprite(String id, String file) {
 		Sprite sprite = new Sprite(new Texture(Gdx.files.internal(file)));
@@ -46,10 +44,9 @@ public class ResourceManager {
 	
 	public static void dispose() {
 		// Iterator avoids ConcurrentModificationException
-		Iterator<Entry<String, Texture>> it = textures.entrySet().iterator();
+		Entries<String, Texture> it = textures.entries();
 	    while (it.hasNext()) {
-	        Map.Entry<String, Texture> pair = (Map.Entry<String, Texture>)it.next();
-	        ((Texture)pair.getValue()).dispose();
+	        it.next().value.dispose();
 	        it.remove();
 	    }
 	}

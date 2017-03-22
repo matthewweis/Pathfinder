@@ -54,7 +54,7 @@ public class MovementSystem extends IteratingSystem {
 		if (Mappers.collisionMapper.has(entity)) {
 			CollisionComponent cc = Mappers.collisionMapper.get(entity);
 						
-			if (dungeon.getRoomsContainingArea(cc.getHitBox(pc.position)).isEmpty()) {
+			if (dungeon.getRoomsContainingArea(cc.getHitBox(pc.position)).size == 0) {
 				entity.remove(MovementCommand.class);
 				pc.position.set(lastPos);
 			}

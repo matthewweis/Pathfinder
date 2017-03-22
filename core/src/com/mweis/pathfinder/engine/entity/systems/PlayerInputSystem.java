@@ -4,8 +4,6 @@ import com.badlogic.ashley.core.Entity;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.mweis.pathfinder.engine.entity.components.InputComponent;
-import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
-import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
 
 public class PlayerInputSystem extends IteratingSystem {

@@ -1,20 +1,17 @@
 package com.mweis.pathfinder.engine.world;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
+import com.badlogic.gdx.ai.pfa.Connection;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
-import com.mweis.pathfinder.engine.world.graph.Edge;
-import com.mweis.pathfinder.engine.world.graph.Graph;
-import com.mweis.pathfinder.engine.world.graph.Node;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.ObjectSet;
+import com.mweis.pathfinder.engine.graph.DGraph;
+import com.mweis.pathfinder.engine.graph.Edge;
 
 /*
  * Holds the entire dungeon.
@@ -29,45 +26,44 @@ public class Dungeon {
 	public final float MIN_RATIO, MAX_RATIO;
 	
 	private Room startRoom, endRoom;
-	private List<Room> noncriticalRooms, criticalRooms, halls, dungeon;
-	private Map<Room, RoomType> roomTypeMap;
-	private Map<Room, List<Room>> criticalRoomGraph;
-	private Graph dungeonGraph;
-//	private Map<Room, List<Room>> testMap;
+	private Array<Room> noncriticalRooms, criticalRooms, halls, dungeon;
+	private ObjectMap<Room, RoomType> roomTypeMap;
+	private DGraph<Room> criticalRoomGraph;
+	private DGraph<Room> dungeonGraph;
 	
 	public final int UNITS_PER_PARTITION = 20; // units per square in the spatial partition for vectors -> rooms
 	public final int PARTITION_WIDTH;
-	private final Map<Integer, List<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
+	private final ObjectMap<Integer, Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
 		
-	public Dungeon(Room start, Room end, List<Room> noncriticalRooms, List<Room> criticalRooms, List<Room> halls, Map<Room, List<Room>> criticalRoomGraph,
+	public Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls2, DGraph<Room> criticalRoomGraph,
 			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
 		this.startRoom = start;
 		this.endRoom = end;
-		this.noncriticalRooms = noncriticalRooms;
-		this.criticalRooms = criticalRooms;
-		this.halls =  halls;
+		this.noncriticalRooms = rooms;
+		this.criticalRooms = corridors;
+		this.halls =  halls2;
 		this.criticalRoomGraph = criticalRoomGraph;
 		this.MIN_SIDE_LENGTH = minSideLength;
 		this.MAX_SIDE_LENGTH = maxSideLength;
 		this.HALL_WIDTH = hallWidth;
-		this.CORRIDOR_COUNT = criticalRooms.size();
-		this.ROOM_COUNT = noncriticalRooms.size();
-		this.HALL_COUNT = halls.size();
+		this.CORRIDOR_COUNT = corridors.size;
+		this.ROOM_COUNT = rooms.size;
+		this.HALL_COUNT = halls2.size;
 		this.MIN_RATIO = minRatio;
 		this.MAX_RATIO = maxRatio;
 		
-		this.dungeon = new ArrayList<Room>();
+		this.dungeon = new Array<Room>();
 		
-		this.roomTypeMap = new HashMap<Room, RoomType>();
-		for (Room room : noncriticalRooms) {
+		this.roomTypeMap = new ObjectMap<Room, RoomType>();
+		for (Room room : rooms) {
 			this.dungeon.add(room);
 			this.roomTypeMap.put(room, RoomType.NONCRITICAL);
 		}
-		for (Room corridor : criticalRooms) {
+		for (Room corridor : corridors) {
 			this.dungeon.add(corridor);
 			this.roomTypeMap.put(corridor, RoomType.CRITICAL);
 		}
-		for (Room hall : halls) {
+		for (Room hall : halls2) {
 			this.dungeon.add(hall);
 			this.roomTypeMap.put(hall, RoomType.HALLWAY);
 		}
@@ -83,27 +79,27 @@ public class Dungeon {
 //		this.testMap = this.createTestGraph();
 	}
 	
-	public List<Room> getDungeon() {
+	public Array<Room> getDungeon() {
 		return dungeon;
 	}
 	
-	public List<Room> getRooms() {
+	public Array<Room> getRooms() {
 		return noncriticalRooms;
 	}
 	
-	public List<Room> getHalls() {
+	public Array<Room> getHalls() {
 		return halls;
 	}
 	
-	public List<Room> getCorridors() {
+	public Array<Room> getCorridors() {
 		return criticalRooms;
 	}
 	
-	public Map<Room, List<Room>> getCriticalRoomGraph() {
+	public DGraph<Room> getCriticalRoomGraph() {
 		return criticalRoomGraph;
 	}
 	
-	public Graph getDungeonGraph() {
+	public DGraph<Room> getDungeonGraph() {
 		return dungeonGraph;
 	}
 	
@@ -146,7 +142,7 @@ public class Dungeon {
 		// DRAW SPATIAL PARTITION MAP
 		sr.begin(ShapeRenderer.ShapeType.Line);
 		sr.setColor(Color.BLACK);
-		for (Integer i : spatialPartition.keySet()) {
+		for (Integer i : spatialPartition.keys()) {
 			int x = (i % PARTITION_WIDTH) * UNITS_PER_PARTITION, y = (i / PARTITION_WIDTH) * UNITS_PER_PARTITION;
 			sr.rect(x, y, UNITS_PER_PARTITION, UNITS_PER_PARTITION);
 		}
@@ -162,10 +158,10 @@ public class Dungeon {
 		
 		// DRAW DUNGEON GRAPH
 		sr.setColor(Color.BLACK);
-		for (Room room : dungeonGraph.nodes.keySet()) {
-			for (Edge edge : dungeonGraph.nodes.get(room).edges) {
-				Room a = edge.a.room;
-				Room b = edge.b.room;
+		for (Room room : dungeonGraph.getKeys()) {
+			for (Connection<Room> edge : dungeonGraph.getConnections(room)) {
+				Room a = edge.getToNode();
+				Room b = edge.getFromNode();
 				sr.line(a.getCenterX(), a.getCenterY(), b.getCenterX(), b.getCenterY());
 			}
 		}
@@ -235,90 +231,48 @@ public class Dungeon {
 		}
 	}
 	
-	private Graph createDungeonGraph() {
+	private DGraph<Room> createDungeonGraph() {
 		/*
 		 * Rooms connect iff a hall passes through them
 		 * a hall is a room
 		 */
-		Graph graph = new Graph();//new HashMap<Room, List<Room>>();
+		DGraph<Room> graph = new DGraph<Room>();
 		
 		// because a hallway will always connect two rooms, we use this as a reference for graph building
 		for (Room hall : this.getHalls()) {
 			for (Room room : this.getDungeon()) {
 				if (this.roomTypeMap.get(room) != RoomType.HALLWAY) { // this also implicitly checks that hall != room
 					if (hall.touches(room)) {
-						float dist = new Vector2(hall.getCenterX(), hall.getCenterY()).dst(new Vector2(room.getCenterX(), room.getCenterY()));
-						Node n1, n2;
-						
-						if (graph.nodes.containsKey(hall)) {
-							n1 = graph.nodes.get(hall);
-						} else {
-							n1 = new Node(hall);
-							graph.nodes.put(hall, n1);
+						float dist = new Vector2(hall.getCenterX(), hall.getCenterY()).dst(new Vector2(room.getCenterX(), room.getCenterY()));						
+						if (!graph.hasKey(hall)) {
+							graph.addKey(hall);
 						}
+						graph.addConnection(hall, new Edge<Room>(hall, room, dist));
 						
-						if (graph.nodes.containsKey(room)) {
-							n2 = graph.nodes.get(room);
-						} else {
-							n2 = new Node(room);
-							graph.nodes.put(room, n2);
+						if (!graph.hasKey(room)) {
+							graph.addKey(room);
 						}
-						
-						Edge edge = new Edge(n1, n2, dist);
-						
-						n1.edges.add(edge);
-						n2.edges.add(edge);
+						graph.addConnection(room, new Edge<Room>(room, hall, dist));
 					}
 				}
 			}
 		}
 		
-		for (int i=0; i < getHalls().size(); i++) {
-			for (int j=i+1; j < getHalls().size(); j++) {
+		for (int i=0; i < getHalls().size; i++) {
+			for (int j=i+1; j < getHalls().size; j++) {
 				Room h1 = getHalls().get(i);
 				Room h2 = getHalls().get(j);
 				if (h1.touches(h2)) {
-					System.out.println("connected 2 halls");
 					float dist = new Vector2(h1.getCenterX(), h1.getCenterY()).dst(new Vector2(h2.getCenterX(), h2.getCenterY()));
-					Node n1 = graph.nodes.get(h1);
-					Node n2 = graph.nodes.get(h2);
-					Edge edge = new Edge(n1, n2, dist);
-					n1.edges.add(edge);
-					n2.edges.add(edge);
-				}
-			}
-		}
-		
-		return graph;
-	}
-	
-	private Map<Room, List<Room>> createTestGraph() {
-		/*
-		 * Rooms connect iff a hall passes through them
-		 * a hall is a room
-		 */
-		HashMap<Room, List<Room>> graph = new HashMap<Room, List<Room>>();
-		
-		// because a hallway will always connect two rooms, we use this as a reference for graph building
-		for (Room hall : this.getHalls()) {
-			for (Room room : this.getDungeon()) {
-				if (this.roomTypeMap.get(room) != RoomType.HALLWAY) { // this also implicitly checks that hall != room
-					if (hall.touches(room)) {
-						if (graph.containsKey(hall)) {
-							graph.get(hall).add(room);
-						} else {
-							ArrayList<Room> l = new ArrayList<Room>(1);
-							l.add(room);
-							graph.put(hall, l);
-						}
-						if (graph.containsKey(room)) {
-							graph.get(room).add(hall);
-						} else {
-							ArrayList<Room> l = new ArrayList<Room>(1);
-							l.add(hall);
-							graph.put(room, l);
-						}
+					if (!graph.hasKey(h1)) {
+						graph.addKey(h1);
 					}
+					graph.addConnection(h1, new Edge<Room>(h1, h2, dist));
+					
+					if (!graph.hasKey(h2)) {
+						graph.addKey(h2);
+					}
+					graph.addConnection(h2, new Edge<Room>(h2, h1, dist));
 				}
 			}
 		}
@@ -330,8 +284,8 @@ public class Dungeon {
 	 * Creates a spatial partition, where world cords / unitsPerPartition map to the rooms.
 	 * Make sure dungeon is in world space before calling this method.
 	 */
-	private Map<Integer, List<Room>> createSpatialParition() {
-		Map<Integer, Set<Room>> map = new HashMap<Integer, Set<Room>>(); // no repeats
+	private ObjectMap<Integer, Array<Room>> createSpatialParition() {
+		ObjectMap<Integer, ObjectSet<Room>> map = new ObjectMap<Integer, ObjectSet<Room>>(); // no repeats
 		
 		/*
 		 * HORRIBLE RUNTIME. But only needs to be run once per dungeon generation.
@@ -344,36 +298,25 @@ public class Dungeon {
 					if (map.containsKey(key)) {
 						map.get(key).add(room);
 					} else {
-						map.put(key, new HashSet<Room>());
+						map.put(key, new ObjectSet<Room>());
 					}
 				}
 			}
 		}
-//		for (int y=0; y < HEIGHT; y += 1) {
-//			for (int x=0; x < WIDTH; x += 1) {
-//				int key = calculatePartitionKey(x, y);
-//				for (Room room : this.getDungeon()) {
-//					if (room.getBounds().contains(x, y)) {
-//						if (map.containsKey(key)) {
-//							map.get(key).add(room);
-//						} else {
-//							map.put(key, new HashSet<Room>());
-//						}
-//					}
-//				}
-//			}
-//		}
 		
-		Map<Integer, List<Room>> ret = new HashMap<Integer, List<Room>>();
-		for (Integer key : map.keySet()) {
-			ret.put(key, new ArrayList<Room>(map.get(key)));
+		ObjectMap<Integer, Array<Room>> ret = new ObjectMap<Integer, Array<Room>>();
+		for (Integer key : map.keys()) {
+			ret.put(key, new Array<Room>());
+			for (Room room : map.get(key)) {
+				ret.get(key).add(room);
+			}
 		}
 		return ret;
 	}
 	
-	private Set<Room> getPotentialRoomsInArea(Rectangle area) {
+	private ObjectSet<Room> getPotentialRoomsInArea(Rectangle area) {
 		// create a list of rooms that area could potentially have from spatial partition
-		Set<Room> potentialRooms = new HashSet<Room>();
+		ObjectSet<Room> potentialRooms = new ObjectSet<Room>();
 		
 		Integer aa = calculatePartitionKey(area.x, area.y);
 		Integer bb = calculatePartitionKey(area.x + area.width, area.y);
@@ -415,7 +358,7 @@ public class Dungeon {
 		return potentialRooms;
 	}
 	
-	public List<Room> getRoomsInArea(Rectangle area) {
+	public Array<Room> getRoomsInArea(Rectangle area) {
 		int biggest = HALL_WIDTH > MIN_SIDE_LENGTH ? HALL_WIDTH : MIN_SIDE_LENGTH;
 		if (area.width > biggest || area.height > biggest) {
 			try {
@@ -427,10 +370,10 @@ public class Dungeon {
 		}
 		
 		// create a list of rooms that area could potentially have from spatial partition
-		Set<Room> potentialRooms = this.getPotentialRoomsInArea(area);
+		ObjectSet<Room> potentialRooms = this.getPotentialRoomsInArea(area);
 		
 		// perform a bounds check on the potential rooms
-		List<Room> rooms = new ArrayList<Room>(potentialRooms.size());
+		Array<Room> rooms = new Array<Room>(potentialRooms.size);
 		for (Room room : potentialRooms) {			
 			if (room.getBounds().overlaps(area)) {
 				rooms.add(room);
@@ -440,12 +383,12 @@ public class Dungeon {
 		return rooms;
 	}
 	
-	public List<Room> getRoomsContainingArea(Rectangle area) {
+	public Array<Room> getRoomsContainingArea(Rectangle area) {
 		// create a list of rooms that area could potentially have from spatial partition
-		Set<Room> potentialRooms = this.getPotentialRoomsInArea(area);
+		ObjectSet<Room> potentialRooms = this.getPotentialRoomsInArea(area);
 			
 		// perform a bounds check on the potential rooms
-		List<Room> rooms = new ArrayList<Room>(potentialRooms.size());
+		Array<Room> rooms = new Array<Room>(potentialRooms.size);
 		for (Room room : potentialRooms) {			
 			if (room.getBounds().contains(area)) {
 				rooms.add(room);

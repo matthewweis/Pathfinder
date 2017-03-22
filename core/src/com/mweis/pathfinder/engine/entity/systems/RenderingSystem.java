@@ -6,7 +6,6 @@ import com.badlogic.ashley.systems.IteratingSystem;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.mweis.pathfinder.engine.entity.components.AnimationComponent;
-import com.mweis.pathfinder.engine.entity.components.CollisionComponent;
 import com.mweis.pathfinder.engine.entity.components.DirectionComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.entity.components.SpriteComponent;

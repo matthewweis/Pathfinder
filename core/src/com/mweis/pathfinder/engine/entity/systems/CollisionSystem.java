@@ -1,22 +1,15 @@
 package com.mweis.pathfinder.engine.entity.systems;
 
-import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
-import com.badlogic.ashley.core.EntityListener;
-import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
-import com.badlogic.ashley.utils.ImmutableArray;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Vector2;
-import com.badlogic.gdx.math.Vector3;
-import com.badlogic.gdx.math.collision.BoundingBox;
 import com.mweis.pathfinder.engine.entity.components.CollisionComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.util.Debug;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
-import com.mweis.pathfinder.engine.world.Dungeon;
 import com.mweis.pathfinder.engine.world.Room;
 
 /*
@@ -53,7 +46,7 @@ public class CollisionSystem extends IteratingSystem {
 					CollisionComponent c2 = Mappers.collisionMapper.get(e2);
 					Vector2 p2 = Mappers.positionMapper.get(e2).position;
 					
-					boolean alreadyOverlapping = c1.collisions.contains(e2);
+					boolean alreadyOverlapping = c1.collisions.contains(e2, true);
 					boolean overlapping = c1.getHitBox(p1).overlaps(c2.getHitBox(p2));
 					
 					if (overlapping && !alreadyOverlapping) {
@@ -65,7 +58,7 @@ public class CollisionSystem extends IteratingSystem {
 						}
 						c1.collisions.add(e2);
 					} else if (!overlapping && alreadyOverlapping) {
-						c1.collisions.remove(e2);
+						c1.collisions.removeValue(e2, true);
 					}
 				}
 			}

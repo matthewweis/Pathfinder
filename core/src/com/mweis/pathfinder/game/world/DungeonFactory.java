@@ -1,13 +1,14 @@
 package com.mweis.pathfinder.game.world;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
+import com.badlogic.gdx.ai.pfa.Connection;
+import com.badlogic.gdx.maps.Map;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
+import com.mweis.pathfinder.engine.graph.DGraph;
+import com.mweis.pathfinder.engine.graph.Edge;
 import com.mweis.pathfinder.engine.world.Dungeon;
 import com.mweis.pathfinder.engine.world.Room;
 
@@ -40,16 +41,16 @@ public class DungeonFactory {
 	private static Room start, end;
 	
 	public static Dungeon generateDungeon() {
-		List<Room> rooms = createRooms();
+		Array<Room> rooms = createRooms();
 		seperateRooms(rooms);
-		List<Room> corridors = findCorridors(rooms);
+		Array<Room> corridors = findCorridors(rooms);
 		centerCorridors(rooms, corridors);
-		Map<Room, List<Room>> graph = connectRooms(corridors);
-		List<Room> halls = createHalls(graph);
+		DGraph<Room> graph = connectRooms(corridors);
+		Array<Room> halls = createHalls(graph);
 		for (Room hall : halls) {
 			hall.expand(1);
 		}
-		List<Room> untouched = removeUntouched(rooms, halls);
+		Array<Room> untouched = removeUntouched(rooms, halls);
 		
 		findStartAndEnd(corridors);
 		
@@ -57,11 +58,11 @@ public class DungeonFactory {
 				maxSideLength, hallWidth, minRatio, maxRatio);
 	}
 	
-	private static List<Room> createRooms() {
+	private static Array<Room> createRooms() {
 		int width, height, x, y;
 		double ratio;
 		Room room;
-		ArrayList<Room> rooms = new ArrayList<Room>(roomCount);
+		Array<Room> rooms = new Array<Room>(roomCount);
 		for (int i=0; i < roomCount; i++) {
 			do {
 				width = getRandomSide();
@@ -76,15 +77,15 @@ public class DungeonFactory {
 		return rooms;
 	}
 	
-	private static void seperateRooms(List<Room> rooms) {
+	private static void seperateRooms(Array<Room> rooms) {
 		Room a, b;
 		int dx, dxa, dxb, dy, dya, dyb;
 		boolean touching;
 		do {
 			touching = false;
-			for(int i = 0;i < rooms.size();i++) {
+			for(int i = 0; i < rooms.size; i++) {
 				a = rooms.get(i);
-				for(int j = i+1;j < rooms.size();j++) {
+				for(int j = i+1; j < rooms.size; j++) {
 					b = rooms.get(j);
 					if(a.touches(b, padding)) {
 						touching = true;
@@ -107,16 +108,16 @@ public class DungeonFactory {
 		} while(touching);
 	}
 	
-    private static List<Room> findCorridors(List<Room> rooms) {
-    	Collections.sort(rooms);
-    	List<Room> corridors = new ArrayList<Room>();
+    private static Array<Room> findCorridors(Array<Room> rooms) {
+    	rooms.sort();
+    	Array<Room> corridors = new Array<Room>();
         for(int i = 0; i < corridorCount; i++) {
-        	corridors.add(rooms.remove(0));
+        	corridors.add(rooms.removeIndex(0));
         }
         return corridors;
     }
 	
-	private static void centerCorridors(List<Room> rooms, List<Room> corridors) {
+	private static void centerCorridors(Array<Room> rooms, Array<Room> corridors) {
         int left = Integer.MAX_VALUE, right = Integer.MIN_VALUE;
         int top = Integer.MIN_VALUE, bottom = Integer.MAX_VALUE;
         for(Room corridor : corridors) {
@@ -133,18 +134,18 @@ public class DungeonFactory {
             room.shift(-shiftX, -shiftY);
     }
 
-    private static Map<Room, List<Room>> connectRooms(List<Room> corridors) {
+    private static DGraph<Room> connectRooms(Array<Room> corridors) {
         Room a, b, c;
-        Map<Room, List<Room>> graph = new HashMap<Room, List<Room>>();
+        DGraph<Room> graph = new DGraph<Room>();
         double abDist, acDist, bcDist;
         boolean skip;
-        for(int i = 0; i < corridors.size(); i++) {
+        for(int i = 0; i < corridors.size; i++) {
             a = corridors.get(i);
-            for(int j = i+1; j < corridors.size(); j++) {
+            for(int j = i+1; j < corridors.size; j++) {
                 skip = false;
                 b = corridors.get(j);
                 abDist = Math.pow(a.getCenterX()-b.getCenterX(), 2) + Math.pow(a.getCenterY()-b.getCenterY(), 2);
-                for(int k = 0;k < corridors.size();k++) {
+                for(int k = 0;k < corridors.size;k++) {
                     if(k == i || k == j)
                         continue;
                     c = corridors.get(k);
@@ -156,24 +157,31 @@ public class DungeonFactory {
                         break;
                 }
                 if(!skip) {
-                    if(graph.get(a) == null)
-                        graph.put(a, new LinkedList<Room>());
-                    graph.get(a).add(b);
+                	if (!graph.hasKey(a)) {
+                		graph.addKey(a);
+                	}
+					float dist = new Vector2(a.getCenterX(), a.getCenterY()).dst(new Vector2(b.getCenterX(), b.getCenterY()));						
+                	graph.addConnection(a, new Edge<Room>(a, b, dist));
+//                    if(graph.get(a) == null)
+//                        graph.put(a, new Array<Room>());
+//                    graph.get(a).add(b);
                 }
             }
         }
         return graph;
     }
 
-    private static List<Room> createHalls(Map<Room, List<Room>> graph) {
+    private static Array<Room> createHalls(DGraph<Room> graph) {
         int dx, dy, x, y;
         Room a, b;
-        List<Room> keys = new ArrayList<Room>();
-        List<Room> halls = new ArrayList<Room>();
-        keys.addAll(graph.keySet());
-        Collections.sort(keys);
-        for(Room outer : keys) {
-            for(Room inner : graph.get(outer)) {
+        Array<Room> keys = new Array<Room>();
+        Array<Room> halls = new Array<Room>();
+        keys.addAll(graph.getKeys().toArray());
+        keys.sort();
+        for(Room key : keys) {
+            for(Connection<Room> edge : graph.getConnections(key)) {
+            	Room outer = edge.getFromNode();
+            	Room inner = edge.getToNode();
             	// make sure starting point is to the left
             	if(outer.getCenterX() < inner.getCenterX()) {
                     a = outer;
@@ -199,12 +207,12 @@ public class DungeonFactory {
         return halls;
     }
     
-    private static List<Room> removeUntouched(List<Room> rooms, List<Room> halls) {
+    private static Array<Room> removeUntouched(Array<Room> rooms, Array<Room> halls) {
     	Room room;
-    	List<Room> untouched = new ArrayList<Room>();
+    	Array<Room> untouched = new Array<Room>();
     	boolean touched;
     	int i = 0;
-    	while (i < rooms.size()) {
+    	while (i < rooms.size) {
     		room = rooms.get(i);
     		touched = false;
     		for(Room hall : halls) {
@@ -214,7 +222,7 @@ public class DungeonFactory {
     			}
     		}
     		if(!touched) {
-    			untouched.add(rooms.remove(i));
+    			untouched.add(rooms.removeIndex(i));
     		} else {
     			i++;
     		}
@@ -225,12 +233,12 @@ public class DungeonFactory {
     /*
      * Send list of corridors, and this will set the starting and ending rooms.
      */
-    private static void findStartAndEnd(List<Room> corridors) {
+    private static void findStartAndEnd(Array<Room> corridors) {
         Room a, b;
         double maxDist = Double.MIN_VALUE, dist;
-        for(int i = 0;i < corridors.size();i++) {
+        for(int i = 0;i < corridors.size;i++) {
             a = corridors.get(i);
-            for(int j = i+1;j < corridors.size();j++) {
+            for(int j = i+1;j < corridors.size;j++) {
                 b = corridors.get(j);
                 dist = Math.pow(a.getCenterX()-b.getCenterX(), 2) + Math.pow(a.getCenterY()-b.getCenterY(), 2);
                 if(dist > maxDist) {

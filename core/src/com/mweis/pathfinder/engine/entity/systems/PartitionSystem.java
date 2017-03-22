@@ -1,9 +1,5 @@
 package com.mweis.pathfinder.engine.entity.systems;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
@@ -11,6 +7,8 @@ import com.badlogic.ashley.core.EntitySystem;
 import com.badlogic.ashley.core.Family;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 import com.mweis.pathfinder.engine.entity.components.CollisionComponent;
 import com.mweis.pathfinder.engine.entity.components.PositionComponent;
 import com.mweis.pathfinder.engine.util.Mappers;
@@ -32,15 +30,15 @@ public class PartitionSystem extends EntitySystem {
 	 * Maps rooms to all entities within the room.
 	 * Note than an entity may be in two rooms at once.
 	 */
-	private Map<Room, List<Entity>> roomToEntityMap;
-	private Map<Entity, List<Room>> entityToRoomMap;
+	private ObjectMap<Room, Array<Entity>> roomToEntityMap;
+	private ObjectMap<Entity, Array<Room>> entityToRoomMap;
 	
 	public PartitionSystem(Dungeon dungeon, Engine engine) {
 		super(SystemPriorities.PRE_PROCESSING.get());
 		this.dungeon = dungeon;
 		this.engine = engine;
-		this.roomToEntityMap = new HashMap<Room, List<Entity>>();
-		this.entityToRoomMap = new HashMap<Entity, List<Room>>();
+		this.roomToEntityMap = new ObjectMap<Room, Array<Entity>>();
+		this.entityToRoomMap = new ObjectMap<Entity, Array<Room>>();
 	}
 	
 	@Override
@@ -54,8 +52,8 @@ public class PartitionSystem extends EntitySystem {
 				pc.hasMoved = false;
 				Vector2 position = Mappers.positionMapper.get(entity).position;
 				Rectangle area = Mappers.collisionMapper.get(entity).getHitBox(position);
-				List<Room> temp = dungeon.getRoomsInArea(area);
-				List<Room> rooms = temp == null ? new ArrayList<Room>(0) : temp;
+				Array<Room> temp = dungeon.getRoomsInArea(area);
+				Array<Room> rooms = temp == null ? new Array<Room>(0) : temp;
 				
 				this.entityToRoomMap.put(entity, rooms);
 				
@@ -63,7 +61,7 @@ public class PartitionSystem extends EntitySystem {
 					if (roomToEntityMap.containsKey(room)) {
 						roomToEntityMap.get(room).add(entity);
 					} else {
-						List<Entity> list = new ArrayList<Entity>();
+						Array<Entity> list = new Array<Entity>();
 						list.add(entity);
 						roomToEntityMap.put(room, list);
 					}
@@ -72,19 +70,19 @@ public class PartitionSystem extends EntitySystem {
 		}
 	}
 	
-	public List<Entity> entitiesInRoom(Room room) {
+	public Array<Entity> entitiesInRoom(Room room) {
 		if (roomToEntityMap.containsKey(room)) {
 			return roomToEntityMap.get(room);
 		} else {
-			return new ArrayList<Entity>(0); // return an empty (BUT NOT NULL) list
+			return new Array<Entity>(0); // return an empty (BUT NOT NULL) list
 		}
 	}
 	
-	public List<Room> roomsContainingEntity(Entity entity) {
+	public Array<Room> roomsContainingEntity(Entity entity) {
 		if (entityToRoomMap.containsKey(entity)) {
 			return entityToRoomMap.get(entity);
 		} else {
-			return new ArrayList<Room>(0); // return an empty (BUT NOT NULL) list
+			return new Array<Room>(0); // return an empty (BUT NOT NULL) list
 		}
 	}
 }

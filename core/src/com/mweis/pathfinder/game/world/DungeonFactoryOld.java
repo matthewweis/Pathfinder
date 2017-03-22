@@ -12,7 +12,7 @@ import com.badlogic.gdx.math.Vector2;
  * https://www.reddit.com/r/gamedev/comments/1dlwc4/procedural_dungeon_generation_algorithm_explained/
  * http://tinykeep.com/dungen/
  */
-public class DungeonFactoryOld {
+class DungeonFactoryOld {
 	
 	
 	public static void generateDungeon(int cells, float radius) {
