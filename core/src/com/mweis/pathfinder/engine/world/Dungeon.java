@@ -8,6 +8,8 @@ import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.IntMap;
+import com.badlogic.gdx.utils.IntMap.Keys;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.ObjectSet;
 import com.mweis.pathfinder.engine.graph.DGraph;
@@ -33,7 +35,7 @@ public class Dungeon {
 	
 	public final int UNITS_PER_PARTITION = 20; // units per square in the spatial partition for vectors -> rooms
 	public final int PARTITION_WIDTH;
-	private final ObjectMap<Integer, Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
+	private final IntMap<Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
 		
 	public Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls2, DGraph<Room> criticalRoomGraph,
 			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
@@ -142,7 +144,9 @@ public class Dungeon {
 		// DRAW SPATIAL PARTITION MAP
 		sr.begin(ShapeRenderer.ShapeType.Line);
 		sr.setColor(Color.BLACK);
-		for (Integer i : spatialPartition.keys()) {
+		Keys keys = spatialPartition.keys();
+		while (keys.hasNext) {
+			int i = keys.next();
 			int x = (i % PARTITION_WIDTH) * UNITS_PER_PARTITION, y = (i / PARTITION_WIDTH) * UNITS_PER_PARTITION;
 			sr.rect(x, y, UNITS_PER_PARTITION, UNITS_PER_PARTITION);
 		}
@@ -284,8 +288,8 @@ public class Dungeon {
 	 * Creates a spatial partition, where world cords / unitsPerPartition map to the rooms.
 	 * Make sure dungeon is in world space before calling this method.
 	 */
-	private ObjectMap<Integer, Array<Room>> createSpatialParition() {
-		ObjectMap<Integer, ObjectSet<Room>> map = new ObjectMap<Integer, ObjectSet<Room>>(); // no repeats
+	private IntMap<Array<Room>> createSpatialParition() {
+		IntMap<ObjectSet<Room>> map = new IntMap<ObjectSet<Room>>(); // no repeats
 		
 		/*
 		 * HORRIBLE RUNTIME. But only needs to be run once per dungeon generation.
@@ -304,12 +308,15 @@ public class Dungeon {
 			}
 		}
 		
-		ObjectMap<Integer, Array<Room>> ret = new ObjectMap<Integer, Array<Room>>();
-		for (Integer key : map.keys()) {
+		IntMap<Array<Room>> ret = new IntMap<Array<Room>>();
+		Keys keys = map.keys();
+		while (keys.hasNext) {
+			int key = keys.next();
 			ret.put(key, new Array<Room>());
 			for (Room room : map.get(key)) {
 				ret.get(key).add(room);
 			}
+//			map.keys().remove();
 		}
 		return ret;
 	}
