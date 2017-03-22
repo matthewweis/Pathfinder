@@ -17,6 +17,7 @@ import com.mweis.pathfinder.engine.util.Debug;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
 import com.mweis.pathfinder.engine.world.Dungeon;
+import com.mweis.pathfinder.engine.world.Room;
 
 /*
  * A collision system to handle ENTITY ON ENTITY collisions.
@@ -24,14 +25,12 @@ import com.mweis.pathfinder.engine.world.Dungeon;
  */
 public class CollisionSystem extends IteratingSystem {
 	
-	private Engine engine;
-	private Family family;
+	private PartitionSystem partitionSystem;
 	private Matrix4 combined; // TEMP FOR COLL DEBUG
 	
-	public CollisionSystem(Engine engine, Dungeon dungeon) {
+	public CollisionSystem(PartitionSystem partitionSystem) {
 		super(Family.all(CollisionComponent.class, PositionComponent.class).get(), SystemPriorities.DEFAULT.get());
-		this.engine = engine;
-		this.family = Family.all(CollisionComponent.class, PositionComponent.class).get();
+		this.partitionSystem = partitionSystem;
 	}
 	
 	public void update(Matrix4 combined) { // TEMP FOR COLL DEBUG
@@ -46,27 +45,28 @@ public class CollisionSystem extends IteratingSystem {
 		
 		Debug.DrawDebugRect(c1.getHitBox(p1), combined);
 		
-		// quick n^2 check to be converted into a partition
-		for (Entity e2 : engine.getEntitiesFor(family)) {
-			if (e1 != e2) {
-//				CollisionComponent c1 = Mappers.collisionMapper.get(e1);
-//				Vector2 p1 = Mappers.positionMapper.get(e1).position;
-				CollisionComponent c2 = Mappers.collisionMapper.get(e2);
-				Vector2 p2 = Mappers.positionMapper.get(e2).position;
-				
-				boolean alreadyOverlapping = c1.collisions.contains(e2);
-				boolean overlapping = c1.getHitBox(p1).overlaps(c2.getHitBox(p2));
-				
-				if (overlapping && !alreadyOverlapping) {
-					// only handle 1-way collision because this algorithm will check twice
-					// can be improved with for i=1..n, j=i+1..n
-					c1.selfBehavior(e1);
-					if (c2.isSubjectToInfluence) {
-						c1.perscribeBehavior(e2);
+		for (Room room : partitionSystem.roomsContainingEntity(e1)) {
+			for (Entity e2 : partitionSystem.entitiesInRoom(room)) {
+				if (e1 != e2) {
+//					CollisionComponent c1 = Mappers.collisionMapper.get(e1);
+//					Vector2 p1 = Mappers.positionMapper.get(e1).position;
+					CollisionComponent c2 = Mappers.collisionMapper.get(e2);
+					Vector2 p2 = Mappers.positionMapper.get(e2).position;
+					
+					boolean alreadyOverlapping = c1.collisions.contains(e2);
+					boolean overlapping = c1.getHitBox(p1).overlaps(c2.getHitBox(p2));
+					
+					if (overlapping && !alreadyOverlapping) {
+						// only handle 1-way collision because this algorithm will check twice
+						// can be improved with for i=1..n, j=i+1..n
+						c1.selfBehavior(e1);
+						if (c2.isSubjectToInfluence) {
+							c1.perscribeBehavior(e2);
+						}
+						c1.collisions.add(e2);
+					} else if (!overlapping && alreadyOverlapping) {
+						c1.collisions.remove(e2);
 					}
-					c1.collisions.add(e2);
-				} else if (!overlapping && alreadyOverlapping) {
-					c1.collisions.remove(e2);
 				}
 			}
 		}

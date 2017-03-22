@@ -50,9 +50,8 @@ public class GameScreen implements Screen {
 		System.out.format("memory consumption was %d before dungeon gen, and is now %d.%n", before, after);
 		
 		// add systems 
-		cs = new CollisionSystem(engine, dungeon); // TEMP FOR COLL DEBUG
-		
 		engine.addSystem(new PartitionSystem(dungeon, engine));
+		cs = new CollisionSystem(engine.getSystem(PartitionSystem.class)); // TEMP FOR COLL DEBUG
 		engine.addSystem(new MovementSystem(dungeon, engine));
 		engine.addSystem(cs); // TEMP FOR COLL DEBUG
 		engine.addSystem(new RenderingSystem(batch));
