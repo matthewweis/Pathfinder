@@ -83,31 +83,27 @@ public class EntityFactory {
 		Entity entity = new Entity();
 		entity.add(new DirectionComponent());
 		entity.add(new PositionComponent(x, y));
-		System.out.println(ratioX + ", " + ratioY);
 		float anim_ox = ratioX * walkSheet.getHeight() / (FRAME_ROWS * 2); // x is midpoint
 		float anim_oy = ratioY * walkSheet.getWidth() / (FRAME_COLS * 10); // just a little above feet
 		
 		entity.add(new AnimationComponent(map, new Vector2(anim_ox, anim_oy), scale, scale));
 		entity.add(new SpeedComponent(speed));
 		
-//		System.out.println(walkSheet.getWidth() + ", " + walkSheet.getHeight());
 		// each sprite is in a 60x60 box
 		
-		float coll_ox = scale * 0.1f;//walkSheet.getHeight() / (FRAME_ROWS * 8);
-		float coll_oy = scale * 0.10f;//walkSheet.getWidth() / (FRAME_COLS * 20);
+		float coll_ox = scale * .1f;
+		float coll_oy = scale * 0.10f;
 		
 		entity.add(new CollisionComponent(new Behavior() {
 			@Override
 			public void perscribeBehavior(Entity entity) {
-				if (Mappers.movementMapper.has(entity)) { // stop moving on collision
-					entity.remove(MovementCommand.class);
-	        	}
+
 			}
 		}, new Behavior() {
 			@Override
 			public void perscribeBehavior(Entity entity) {
 				System.out.println("mage pokes entity " + entity.toString().substring(31) + ", that'll show him!");
-			} }, new Vector2(coll_ox, coll_oy), scale * 0.25f, scale * 0.75f));
+			} }, -coll_ox, -coll_oy, scale * 0.25f, scale * 0.75f));
 		engine.addEntity(entity);
 		
 		return entity;

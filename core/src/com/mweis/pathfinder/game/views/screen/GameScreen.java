@@ -1,48 +1,41 @@
 package com.mweis.pathfinder.game.views.screen;
 
 
-import java.util.List;
-
 import com.badlogic.ashley.core.Engine;
 import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
 import com.mweis.pathfinder.engine.entity.systems.CollisionSystem;
 import com.mweis.pathfinder.engine.entity.systems.MovementSystem;
+import com.mweis.pathfinder.engine.entity.systems.PartitionSystem;
 import com.mweis.pathfinder.engine.entity.systems.PlayerInputSystem;
 import com.mweis.pathfinder.engine.entity.systems.RenderingSystem;
-import com.mweis.pathfinder.engine.util.Debug;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.views.ResourceManager;
 import com.mweis.pathfinder.engine.world.Dungeon;
-import com.mweis.pathfinder.engine.world.Room;
 import com.mweis.pathfinder.game.entity.EntityFactory;
 import com.mweis.pathfinder.game.world.DungeonFactory;
-import com.mweis.pathfinder.game.world.DungeonFactoryOld;
 
 public class GameScreen implements Screen {
 	Engine engine = new Engine();
 	SpriteBatch batch = new SpriteBatch();
 	OrthographicCamera cam = new OrthographicCamera(1920.0f, 1080.0f);//(100.0f, 100.0f);
-	Entity player = null;
+	Entity player, test = null;
 	CollisionSystem cs = null; // TEMP FOR COLL DEBUG
 	
 	Dungeon dungeon;
+	boolean isCameraLocked = false;
 	
 	@Override
 	public void show() {
 		System.out.println("show");
-		Debug.isDebugMode = true;
 		
 		// load textures
 		ResourceManager.loadTexture("mage", "mage.png");
@@ -53,12 +46,13 @@ public class GameScreen implements Screen {
 		dungeon = DungeonFactory.generateDungeon();
 		
 		long after = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-		System.out.println(before + ", " + after);
+		System.out.format("memory consumption was %d before dungeon gen, and is now %d.%n", before, after);
 		
-		// add systems
+		// add systems 
 		cs = new CollisionSystem(engine, dungeon); // TEMP FOR COLL DEBUG
 		
-		engine.addSystem(new MovementSystem(engine));
+		engine.addSystem(new PartitionSystem(dungeon, engine));
+		engine.addSystem(new MovementSystem(dungeon, engine));
 		engine.addSystem(cs); // TEMP FOR COLL DEBUG
 		engine.addSystem(new RenderingSystem(batch));
 		engine.addSystem(new PlayerInputSystem());
@@ -69,6 +63,7 @@ public class GameScreen implements Screen {
 		// add entities
 		Vector2 spawn = new Vector2(dungeon.getStartRoom().getCenterX(), dungeon.getStartRoom().getCenterY());
 		player = EntityFactory.spawnMage(spawn.x, spawn.y, 12.8f, 6.0f, engine);
+		test = EntityFactory.spawnMage(spawn.x + 15, spawn.y, 12.8f, 6.0f, engine);
 		
 		// setup input (this class is the listener)
 		setupInput();
@@ -107,7 +102,10 @@ public class GameScreen implements Screen {
         }
         
         // make space lock camera on player, otherwise allow free movement
-        if (Gdx.input.isKeyPressed(Input.Keys.SPACE)) {
+        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE)) {
+        	isCameraLocked = !isCameraLocked;
+        } 
+        if (isCameraLocked) {
         	cam.position.set(new Vector3(Mappers.positionMapper.get(player).position, 0));
         } else {
         	final float camEdge = 0.07f; // 7% of the screen can be used for cam movement
@@ -208,11 +206,10 @@ public class GameScreen implements Screen {
 
 	@Override
 	public void resize(int width, int height) {
-		System.out.println("resize");
+		System.out.format("resized screen to (%d, %d)%n", width, height);
 //		cam.viewportWidth = width
 //        cam.viewportHeight = width * height/width; // Lets keep things in proportion.
 //        cam.update();
-        System.out.println(Gdx.graphics.getWidth() + ", " + Gdx.graphics.getHeight());
 	}
 
 	@Override

@@ -1,20 +1,23 @@
 package com.mweis.pathfinder.engine.world;
 
 import java.util.ArrayList;
-import java.util.BitSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import com.badlogic.ashley.core.Entity;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
-import com.badlogic.gdx.math.collision.BoundingBox;
-import com.mweis.pathfinder.engine.entity.components.CollisionComponent;
-import com.mweis.pathfinder.engine.entity.components.PositionComponent;
+import com.badlogic.gdx.math.Rectangle;
 
 /*
  * Holds the entire dungeon.
+ * 
+ * More optimizations include:
+ * reducing size of hallways to only fit between rooms
+ * fixing small cracks between seemingly connected rooms
  */
 public class Dungeon {
 	
@@ -23,19 +26,20 @@ public class Dungeon {
 	
 	private Room start, end;
 	private List<Room> rooms, corridors, halls, dungeon;
+	private Map<Room, String> roomInfoMap;
 	private Map<Room, List<Room>> graph;
 	
-//	private final int collisionPartitionsX = 10, collisionPartitionsY = 10;
-//	private int collisionPartitionWidth, collisionPartitionHeight;
-	private BitSet collisionMap;
-	
+	private final int unitsPerPartition = 20; // units per square in the spatial partition for vectors -> rooms
+	private final int partitionWidth;
+	private final Map<Integer, List<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
+		
 	public Dungeon(Room start, Room end, List<Room> rooms, List<Room> corridors, List<Room> halls, Map<Room, List<Room>> graph,
 			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
 		this.start = start;
 		this.end = end;
 		this.rooms = rooms;
 		this.corridors = corridors;
-		this.halls = halls;
+		this.halls =  halls;
 		this.graph = graph;
 		this.MIN_SIDE_LENGTH = minSideLength;
 		this.MAX_SIDE_LENGTH = maxSideLength;
@@ -47,18 +51,34 @@ public class Dungeon {
 		this.MAX_RATIO = maxRatio;
 		
 		this.dungeon = new ArrayList<Room>();
-		this.dungeon.addAll(rooms);
-		this.dungeon.addAll(corridors);
-		this.dungeon.addAll(halls);
+		
+		this.roomInfoMap = new HashMap<Room, String>(); // eventually want a room type enum
+		String r1 = "non-critical room", r2 = "critical room", r3 = "hallway"; // using strings this way saves on space significantly
+		for (Room room : rooms) {
+			this.dungeon.add(room);
+			this.roomInfoMap.put(room, r1);
+		}
+		for (Room corridor : corridors) {
+			this.dungeon.add(corridor);
+			this.roomInfoMap.put(corridor, r2);
+		}
+		for (Room hall : halls) {
+			this.dungeon.add(hall);
+			this.roomInfoMap.put(hall, r3);
+		}
+		
+		this.roomInfoMap.remove(start);
+		this.roomInfoMap.put(start, "start");
+		this.roomInfoMap.remove(end);
+		this.roomInfoMap.put(start, "end");
+		
 		this.putDungeonInWorldSpace();
 		
 		this.WIDTH = this.calculateWidth();
 		this.HEIGHT = this.calculateHeight();
 		
-//		this.collisionPartitionWidth = this.WIDTH / this.collisionPartitionsX;
-//		this.collisionPartitionHeight = this.HEIGHT / this.collisionPartitionsY;
-		
-		this.collisionMap = createCollisionMap();
+		this.partitionWidth = (int) Math.ceil((double)this.WIDTH / this.unitsPerPartition);
+		this.spatialPartition = createSpatialParition();
 	}
 	
 	public List<Room> getDungeon() {
@@ -94,6 +114,7 @@ public class Dungeon {
 		sr.setProjectionMatrix(combined);
 	    sr.begin(ShapeRenderer.ShapeType.Filled);
 	    
+	    
 	    sr.setColor(Color.BROWN);
 	    for (Room corridor : getCorridors()) {
 	    	sr.rect(corridor.getLeft(), corridor.getBottom(), corridor.getWidth(), corridor.getHeight());
@@ -102,17 +123,28 @@ public class Dungeon {
 		for (Room rooms : getRooms()) {
 			sr.rect(rooms.getLeft(), rooms.getBottom(), rooms.getWidth(), rooms.getHeight());
 		}
+		
 		// will draw start and end rooms twice, but it's ok to overlap
 		sr.setColor(Color.LIGHT_GRAY);
 		sr.rect(start.getLeft(), start.getBottom(), start.getWidth(), start.getHeight());
 		sr.setColor(Color.GOLD);
 		sr.rect(end.getLeft(), end.getBottom(), end.getWidth(), end.getHeight());
+		
 		sr.setColor(Color.RED);
 		for (Room halls : getHalls()) {
 			sr.rect(halls.getLeft(), halls.getBottom(), halls.getWidth(), halls.getHeight());
 		}
-	    
-	    sr.end();
+		
+		sr.end();
+		
+		// DRAW SPATIAL PARTITION MAP
+		sr.begin(ShapeRenderer.ShapeType.Line);
+		sr.setColor(Color.BLACK);
+		for (Integer i : spatialPartition.keySet()) {
+			int x = (i % partitionWidth) * unitsPerPartition, y = (i / partitionWidth) * unitsPerPartition;
+			sr.rect(x, y, unitsPerPartition, unitsPerPartition);
+		}
+		sr.end();
 	}
 	
 	private int calculateWidth() {
@@ -143,41 +175,11 @@ public class Dungeon {
 		return topWall - bottomWall;
 	}
 	
-//	/*
-//	 * Where entity room is unspecified.
-//	 * O(n) time
-//	 */
-//	public boolean isColliding(CollisionComponent cc) {
-//		for (Room room : this.getDungeon()) {
-//			if (isColliding(cc, room)) {
-//				return true;
-//			}
-//		}
-//		return false;
-//	}
-//	
 	/*
-	 * Where entity room is specified.
-	 * O(1) time
+	 * Because dungeons are created in the realm of -RADIUS to RADIUS, and are never guarenteed to hit the borders
+	 * this function will normalize the rightmost and bottommost rooms to (0,y) and (x, 0) respectively
+	 * this should only be called once in the constructor
 	 */
-	public boolean isColliding(BoundingBox bb) {
-		float smallest = Math.min(MIN_SIDE_LENGTH, HALL_WIDTH);
-		if (bb.getWidth() < smallest && bb.getHeight() < smallest) { // ensure coll box small enough for corner algorithm to work
-			return collisionMap.get((int)bb.min.x+(int)bb.min.y*this.WIDTH) |
-					collisionMap.get((int)bb.max.x+(int)bb.max.y*this.WIDTH) |
-					collisionMap.get((int)bb.min.x+(int)bb.max.y*this.WIDTH) |
-					collisionMap.get((int)bb.max.x+(int)bb.min.y*this.WIDTH);
-		} else {
-			try {
-				throw new Exception();
-			} catch (Exception e) {
-				System.out.println("no collision algorithm for entities of that size");
-				e.printStackTrace();
-			}
-		}
-		return false;
-	}
-	
 	private void putDungeonInWorldSpace() {
 		int leftmostWall = Integer.MAX_VALUE;
 		int bottomWall = Integer.MAX_VALUE;
@@ -197,18 +199,132 @@ public class Dungeon {
 		for (Room room : this.getDungeon()) {
 			room.shift(dx, dy);
 		}
-		
 	}
 	
-	private BitSet createCollisionMap() {
-		BitSet collisionMap = new BitSet(this.WIDTH * this.HEIGHT);
-		for (Room room : this.getDungeon()) {
-			for (int y = room.getBottom(); y < room.getTop(); y++) {
-				for (int x = room.getLeft(); x < room.getRight(); x++) {
-					collisionMap.set(x+y*this.WIDTH);
+	/*
+	 * Creates a spatial partition, where world cords / unitsPerPartition map to the rooms.
+	 * Make sure dungeon is in world space before calling this method.
+	 */
+	private Map<Integer, List<Room>> createSpatialParition() {
+		Map<Integer, Set<Room>> map = new HashMap<Integer, Set<Room>>();
+		
+		/*
+		 * HORRIBLE RUNTIME. But only needs to be run once per dungeon generation.
+		 * It feels like x and y could increment by unitsPerPartition each time, but this produces weird results
+		 */
+		for (int y=0; y < HEIGHT; y += 1) {
+			for (int x=0; x < WIDTH; x += 1) {
+				int key = calculatePartitionKey(x, y);
+				for (Room room : this.getDungeon()) {
+					if (room.getBounds().contains(x, y)) {
+						if (map.containsKey(key)) {
+							map.get(key).add(room);
+						} else {
+							map.put(key, new HashSet<Room>());
+						}
+					}
 				}
 			}
 		}
-		return collisionMap;
+		
+		Map<Integer, List<Room>> ret = new HashMap<Integer, List<Room>>();
+		for (Integer key : map.keySet()) {
+			ret.put(key, new ArrayList<Room>(map.get(key)));
+		}
+		return ret;
+	}
+	
+	private Set<Room> getPotentialRoomsInArea(Rectangle area) {
+		// create a list of rooms that area could potentially have from spatial partition
+		Set<Room> potentialRooms = new HashSet<Room>();
+		
+		Integer aa = calculatePartitionKey(area.x, area.y);
+		Integer bb = calculatePartitionKey(area.x + area.width, area.y);
+		Integer cc = calculatePartitionKey(area.x, area.y + area.height);
+		Integer dd = calculatePartitionKey(area.x + area.width, area.y + area.height);
+		
+		// no repeat rooms thanks to hashset
+		if (spatialPartition.containsKey(aa)) {
+			potentialRooms.addAll(spatialPartition.get(aa));
+		} else if (aa != bb) {
+			if (spatialPartition.containsKey(bb)) {
+				potentialRooms.addAll(spatialPartition.get(bb));
+			} else if (bb != cc) {
+				if (spatialPartition.containsKey(cc)) {
+					potentialRooms.addAll(spatialPartition.get(cc));
+				} else if (cc != dd) {
+					if (spatialPartition.containsKey(dd)) {
+						potentialRooms.addAll(spatialPartition.get(dd));
+					}
+				}
+			}
+		} else {
+			if (bb != cc) {
+				if (spatialPartition.containsKey(cc)) {
+					potentialRooms.addAll(spatialPartition.get(cc));
+				} else if (cc != dd) {
+					if (spatialPartition.containsKey(dd)) {
+						potentialRooms.addAll(spatialPartition.get(dd));
+					}
+				}
+			} else {
+				if (cc != dd) {
+					if (spatialPartition.containsKey(dd)) {
+						potentialRooms.addAll(spatialPartition.get(dd));
+					}
+				}
+			}
+		}
+		return potentialRooms;
+	}
+	
+	public List<Room> getRoomsInArea(Rectangle area) {
+		int biggest = HALL_WIDTH > MIN_SIDE_LENGTH ? HALL_WIDTH : MIN_SIDE_LENGTH;
+		if (area.width > biggest || area.height > biggest) {
+			try {
+				throw new Exception();
+			} catch (Exception e) {
+				System.out.println("WARNING: Area -> Room algorithm has no case for entities larger than rooms");
+				e.printStackTrace();
+			}
+		}
+		
+		// create a list of rooms that area could potentially have from spatial partition
+		Set<Room> potentialRooms = this.getPotentialRoomsInArea(area);
+		
+		// perform a bounds check on the potential rooms
+		List<Room> rooms = new ArrayList<Room>(potentialRooms.size());
+		for (Room room : potentialRooms) {			
+			if (room.getBounds().overlaps(area)) {
+				rooms.add(room);
+			}
+		}
+		
+		return rooms;
+	}
+	
+	public List<Room> getRoomsContainingArea(Rectangle area) {
+		// create a list of rooms that area could potentially have from spatial partition
+		Set<Room> potentialRooms = this.getPotentialRoomsInArea(area);
+				
+		// perform a bounds check on the potential rooms
+		List<Room> rooms = new ArrayList<Room>(potentialRooms.size());
+		for (Room room : potentialRooms) {			
+			if (room.getBounds().contains(area)) {
+				rooms.add(room);
+			}
+		}
+		
+		return rooms;
+	}
+	
+	private Integer calculatePartitionKey(float x, float y) {
+		int px = (int)x / unitsPerPartition, py = (int)y / unitsPerPartition;
+		return px + py * partitionWidth;
+	}
+	
+	private Integer calculatePartitionKey(int x, int y) {
+		int px = x / unitsPerPartition, py = y / unitsPerPartition;
+		return px + py * partitionWidth;
 	}
 }

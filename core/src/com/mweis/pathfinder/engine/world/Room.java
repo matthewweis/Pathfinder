@@ -1,14 +1,17 @@
 package com.mweis.pathfinder.engine.world;
 
-import java.util.List;
+import com.badlogic.gdx.math.Rectangle;
 
 /*
  * https://github.com/fisherevans/ProceduralGeneration/blob/master/dungeons/src/main/java/com/fisherevans/procedural_generation/dungeons/Room.java
+ * This is a variant of the /fisherevans/'s Room class, which was used alongside the DungeonFactory for random generation.
+ * This class has more build on top of it.
  */
 public class Room implements Comparable<Room> {
 	private int _left, _right, _top, _bottom;
-
-	public Room(int x1, int y1, int width, int height) {
+	private Rectangle bounds = new Rectangle();
+	
+	public Room(int x1, int y1, int width, int height) {		
         _left = x1;
         _right = x1;
         if(width < 0)
@@ -22,22 +25,33 @@ public class Room implements Comparable<Room> {
             _bottom +=  height;
         else
             _top +=  height;
+        updateBounds();
 	}
 	
 	public boolean touches(Room b) {
-		Room a = this;
-		return !(b.getLeft() >= a.getRight() ||
-				b.getRight() <= a.getLeft() ||
-				b.getTop() <= a.getBottom() ||
-				b.getBottom() >= a.getTop());
+		return touches(b, 0);
 	}
 	
 	public boolean touches(Room b, int padding) {
-		Room a = this;
-		return !(b.getLeft()-padding >= a.getRight() ||
-				b.getRight() <= a.getLeft()-padding ||
-				b.getTop() <= a.getBottom()-padding ||
-				b.getBottom()-padding >= a.getTop());
+		return !(b.getLeft()-padding >= this.getRight() ||
+				b.getRight() <= this.getLeft()-padding ||
+				b.getTop() <= this.getBottom()-padding ||
+				b.getBottom()-padding >= this.getTop());
+	}
+	
+	public boolean overlaps(Rectangle area) {
+		return bounds.overlaps(area);
+//		return !(area.getX() >= this.getRight() ||
+//				area.getX() + area.getWidth() <= this.getLeft() ||
+//				area.getY() + area.getHeight() <= this.getBottom() ||
+//				area.getY() >= this.getTop());				
+	}
+	
+	/*
+	 * True if they intersect, but the area is not contained within th
+	 */
+	public boolean borderTouches(Rectangle area) {
+		return area.overlaps(bounds) && !area.contains(bounds) && !bounds.contains(area);
 	}
 	
 	public void expand(int by) {
@@ -45,6 +59,7 @@ public class Room implements Comparable<Room> {
 		_right += by;
 		_top += by;
 		_bottom -= by;
+		updateBounds();
 	}
 
     public int getArea() {
@@ -83,12 +98,17 @@ public class Room implements Comparable<Room> {
 		return (_top+_bottom)/2.0f;
 	}
 	
+	public Rectangle getBounds() {
+		return bounds;
+	}
+	
 	public void shift(int x, int y) {
 		_left += x;
 		_right += x;
 		
 		_top += y;
 		_bottom += y;
+		updateBounds();
 	}
 
     public double getRatio() {
@@ -113,5 +133,9 @@ public class Room implements Comparable<Room> {
                     -(getCenterX()*getCenterX()+getCenterY()*getCenterY()));
         } else
             return d;
-}
+    }
+    
+    private void updateBounds() {
+    	bounds.set(_left, _bottom, _right - _left, _top - _bottom);
+    }
 }

@@ -5,7 +5,6 @@ import com.badlogic.ashley.core.Family;
 import com.badlogic.ashley.systems.IteratingSystem;
 import com.mweis.pathfinder.engine.entity.components.InputComponent;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
-import com.mweis.pathfinder.engine.input.MouseAction;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.util.SystemPriorities;
 

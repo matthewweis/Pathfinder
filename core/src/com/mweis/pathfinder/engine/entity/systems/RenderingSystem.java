@@ -28,7 +28,6 @@ public class RenderingSystem extends IteratingSystem {
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
 		batch.begin();
-//		System.out.println("iterating system update on entity " + entity.toString());
 		PositionComponent position = Mappers.positionMapper.get(entity);
 		
 		if (Mappers.spriteMapper.has(entity)) {

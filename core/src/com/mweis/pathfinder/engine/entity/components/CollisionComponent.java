@@ -4,52 +4,34 @@ import java.util.ArrayList;
 
 import com.badlogic.ashley.core.Component;
 import com.badlogic.ashley.core.Entity;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
 import com.mweis.pathfinder.engine.entity.Behavior;
 
 public class CollisionComponent implements Component {
-	private float width, height;
+	private Rectangle hitbox; // eventually may want multiple
 	private Behavior ISelf, IPerscription; // leave behaviors null if nothing should occur
 	public ArrayList<Entity> collisions = new ArrayList<Entity>(); // keep tracks of entities currently overlapping with this
-	
-	public Vector2 offset;
 	
 	/*
 	 * Creates a CollisionComponent with no special behaviors.
 	 * Width and Height are the dims of the bounding box.
+	 * This is the MODEL SPACE box, and is converted to world space in the getter function.
 	 */
-	public CollisionComponent(Vector2 offset, float width, float height) {
-		this.offset = offset;
-		this.width = width;
-		this.height = height;
-		updateBoundingBox();
+	public CollisionComponent(float x, float y, float width, float height) {
+		hitbox = new Rectangle(x, y, width, height);
 	}
 	
 	/*
 	 * If only one of the behaviors selfBehavior or perscribeBehavior is desired, leave the other one null.
 	 * Width and Height are the dims of the bounding box.
 	 */
-	public CollisionComponent(Behavior selfBehavior, Behavior perscribeBehavior, Vector2 offset, float width, float height) {
-		this(offset, width, height);
+	public CollisionComponent(Behavior selfBehavior, Behavior perscribeBehavior, float x, float y, float width, float height) {
+		this(x, y, width, height);
 		ISelf = selfBehavior;
 		IPerscription = perscribeBehavior;
-	}
-	
-	public void setWidth(float width) {
-		this.width = width;
-		updateBoundingBox();
-	}
-	
-	public void setHeight(float height) {
-		this.height = height;
-		updateBoundingBox();
-	}
-	
-	public void setOffset(Vector2 offset) {
-		this.offset = offset;
-		updateBoundingBox();
 	}
 	
 	/*
@@ -87,15 +69,9 @@ public class CollisionComponent implements Component {
 	}
 	
 	/*
-	 * Returns the NORMALIZED bounding box of this entity.
-	 * THIS SHOULD ALWAYS BE (0, 0, 0) to (width, height, 0) because the CollisionSystem will denormalize this box!
+	 * Returns a copy of the hit box which is converted to world space.
 	 */
-	public BoundingBox bbox;
-	public BoundingBox getBoundingBox() {
-		return bbox;
-	}
-	
-	private void updateBoundingBox() {
-		bbox = new BoundingBox(new Vector3(-offset.x, -offset.y, 0.0f), new Vector3(width-offset.x, height-offset.y, 0.0f));
+	public Rectangle getHitBox(Vector2 position) {
+		return new Rectangle(hitbox.x + position.x, hitbox.y + position.y, hitbox.width, hitbox.height);
 	}
 }
