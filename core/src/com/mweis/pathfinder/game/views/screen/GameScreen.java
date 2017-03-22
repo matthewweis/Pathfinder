@@ -13,6 +13,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
 import com.mweis.pathfinder.engine.entity.systems.CollisionSystem;
+import com.mweis.pathfinder.engine.entity.systems.AISystem;
 import com.mweis.pathfinder.engine.entity.systems.MovementSystem;
 import com.mweis.pathfinder.engine.entity.systems.PartitionSystem;
 import com.mweis.pathfinder.engine.entity.systems.PlayerInputSystem;
@@ -56,6 +57,7 @@ public class GameScreen implements Screen {
 		engine.addSystem(cs); // TEMP FOR COLL DEBUG
 		engine.addSystem(new RenderingSystem(batch));
 		engine.addSystem(new PlayerInputSystem());
+		engine.addSystem(new AISystem());
 		cs.update(cam.combined); // TEMP FOR COLL DEBUG
 		
 		// attach entity listeners
@@ -63,7 +65,7 @@ public class GameScreen implements Screen {
 		// add entities
 		Vector2 spawn = new Vector2(dungeon.getStartRoom().getCenterX(), dungeon.getStartRoom().getCenterY());
 		player = EntityFactory.spawnMage(spawn.x, spawn.y, 12.8f, 6.0f, engine);
-		test = EntityFactory.spawnMage(spawn.x + 15, spawn.y, 12.8f, 6.0f, engine);
+		test = EntityFactory.spawnAiTest(player, spawn.x + 15, spawn.y, 10.0f, 6.0f, engine);
 		
 		// setup input (this class is the listener)
 		setupInput();

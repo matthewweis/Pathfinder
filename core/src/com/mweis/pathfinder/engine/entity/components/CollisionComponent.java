@@ -8,7 +8,7 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.math.collision.BoundingBox;
-import com.mweis.pathfinder.engine.entity.Behavior;
+import com.mweis.pathfinder.engine.entity.ai.behavior.Behavior;
 
 public class CollisionComponent implements Component {
 	private Rectangle hitbox; // eventually may want multiple

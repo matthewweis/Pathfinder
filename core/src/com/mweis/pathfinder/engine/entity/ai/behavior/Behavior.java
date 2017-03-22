@@ -1,4 +1,4 @@
-package com.mweis.pathfinder.engine.entity;
+package com.mweis.pathfinder.engine.entity.ai.behavior;
 
 import com.badlogic.ashley.core.Entity;
 

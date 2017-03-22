@@ -25,52 +25,46 @@ public class Dungeon {
 	public final float MIN_RATIO, MAX_RATIO;
 	
 	private Room start, end;
-	private List<Room> rooms, corridors, halls, dungeon;
-	private Map<Room, String> roomInfoMap;
+	private List<Room> noncriticalRooms, criticalRooms, halls, dungeon;
+	private Map<Room, RoomType> roomTypeMap;
 	private Map<Room, List<Room>> graph;
 	
 	private final int unitsPerPartition = 20; // units per square in the spatial partition for vectors -> rooms
 	private final int partitionWidth;
 	private final Map<Integer, List<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
 		
-	public Dungeon(Room start, Room end, List<Room> rooms, List<Room> corridors, List<Room> halls, Map<Room, List<Room>> graph,
+	public Dungeon(Room start, Room end, List<Room> noncriticalRooms, List<Room> criticalRooms, List<Room> halls, Map<Room, List<Room>> graph,
 			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
 		this.start = start;
 		this.end = end;
-		this.rooms = rooms;
-		this.corridors = corridors;
+		this.noncriticalRooms = noncriticalRooms;
+		this.criticalRooms = criticalRooms;
 		this.halls =  halls;
 		this.graph = graph;
 		this.MIN_SIDE_LENGTH = minSideLength;
 		this.MAX_SIDE_LENGTH = maxSideLength;
 		this.HALL_WIDTH = hallWidth;
-		this.CORRIDOR_COUNT = corridors.size();
-		this.ROOM_COUNT = rooms.size();
+		this.CORRIDOR_COUNT = criticalRooms.size();
+		this.ROOM_COUNT = noncriticalRooms.size();
 		this.HALL_COUNT = halls.size();
 		this.MIN_RATIO = minRatio;
 		this.MAX_RATIO = maxRatio;
 		
 		this.dungeon = new ArrayList<Room>();
 		
-		this.roomInfoMap = new HashMap<Room, String>(); // eventually want a room type enum
-		String r1 = "non-critical room", r2 = "critical room", r3 = "hallway"; // using strings this way saves on space significantly
-		for (Room room : rooms) {
+		this.roomTypeMap = new HashMap<Room, RoomType>();
+		for (Room room : noncriticalRooms) {
 			this.dungeon.add(room);
-			this.roomInfoMap.put(room, r1);
+			this.roomTypeMap.put(room, RoomType.NONCRITICAL);
 		}
-		for (Room corridor : corridors) {
+		for (Room corridor : criticalRooms) {
 			this.dungeon.add(corridor);
-			this.roomInfoMap.put(corridor, r2);
+			this.roomTypeMap.put(corridor, RoomType.CRITICAL);
 		}
 		for (Room hall : halls) {
 			this.dungeon.add(hall);
-			this.roomInfoMap.put(hall, r3);
+			this.roomTypeMap.put(hall, RoomType.HALLWAY);
 		}
-		
-		this.roomInfoMap.remove(start);
-		this.roomInfoMap.put(start, "start");
-		this.roomInfoMap.remove(end);
-		this.roomInfoMap.put(start, "end");
 		
 		this.putDungeonInWorldSpace();
 		
@@ -86,7 +80,7 @@ public class Dungeon {
 	}
 	
 	public List<Room> getRooms() {
-		return rooms;
+		return noncriticalRooms;
 	}
 	
 	public List<Room> getHalls() {
@@ -94,7 +88,7 @@ public class Dungeon {
 	}
 	
 	public List<Room> getCorridors() {
-		return corridors;
+		return criticalRooms;
 	}
 	
 	public Map<Room, List<Room>> getGraph() {
