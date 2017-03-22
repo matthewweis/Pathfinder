@@ -9,4 +9,12 @@ public class Edge {
 		this.b = b;
 		this.weight = weight;
 	}
+	
+	public Node getNodeThatIsnt(Node n) {
+		if (a == n) {
+			return b;
+		} else {
+			return a;
+		}
+	}
 }
