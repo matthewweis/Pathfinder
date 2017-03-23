@@ -7,20 +7,23 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Screen;
+import com.badlogic.gdx.ai.pfa.DefaultGraphPath;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.mweis.pathfinder.engine.entity.components.commands.MovementCommand;
+import com.mweis.pathfinder.engine.entity.components.commands.PathMovementCommand;
 import com.mweis.pathfinder.engine.entity.systems.CollisionSystem;
 import com.mweis.pathfinder.engine.entity.systems.AISystem;
 import com.mweis.pathfinder.engine.entity.systems.MovementSystem;
 import com.mweis.pathfinder.engine.entity.systems.PartitionSystem;
-import com.mweis.pathfinder.engine.entity.systems.PlayerInputSystem;
+import com.mweis.pathfinder.engine.entity.systems.PathingSystem;
 import com.mweis.pathfinder.engine.entity.systems.RenderingSystem;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.views.ResourceManager;
 import com.mweis.pathfinder.engine.world.Dungeon;
+import com.mweis.pathfinder.engine.world.Room;
 import com.mweis.pathfinder.game.entity.EntityFactory;
 import com.mweis.pathfinder.game.world.DungeonFactory;
 
@@ -30,9 +33,9 @@ public class GameScreen implements Screen {
 	OrthographicCamera cam = new OrthographicCamera(1280.0f, 720.0f);
 	Entity player, test = null;
 	CollisionSystem cs = null; // TEMP FOR COLL DEBUG
-	
 	Dungeon dungeon;
 	boolean isCameraLocked = false;
+	DefaultGraphPath<Room> testPath;
 	
 	@Override
 	public void show() {
@@ -52,10 +55,10 @@ public class GameScreen implements Screen {
 		// add systems 
 		engine.addSystem(new PartitionSystem(dungeon, engine));
 		cs = new CollisionSystem(engine.getSystem(PartitionSystem.class)); // TEMP FOR COLL DEBUG
-		engine.addSystem(new MovementSystem(dungeon, engine));
+		engine.addSystem(new MovementSystem(dungeon));
+		engine.addSystem(new PathingSystem(dungeon));
 		engine.addSystem(cs); // TEMP FOR COLL DEBUG
 		engine.addSystem(new RenderingSystem(batch));
-		engine.addSystem(new PlayerInputSystem());
 		engine.addSystem(new AISystem());
 		cs.update(cam.combined); // TEMP FOR COLL DEBUG
 		
@@ -64,7 +67,7 @@ public class GameScreen implements Screen {
 		// add entities
 		Vector2 spawn = new Vector2(dungeon.getStartRoom().getCenterX(), dungeon.getStartRoom().getCenterY());
 		player = EntityFactory.spawnMage(spawn.x, spawn.y, 12.8f, 6.0f, engine);
-		test = EntityFactory.spawnAiTest(player, spawn.x + 15, spawn.y, 10.0f, 6.0f, engine);
+		test = EntityFactory.spawnAiBehaviorTest(player, spawn.x + 15, spawn.y, 10.0f, 6.0f, engine);
 		
 		// setup input (this class is the listener)
 		setupInput();
@@ -97,9 +100,7 @@ public class GameScreen implements Screen {
             //If the E Key is pressed, rotate the camera by rotationSpeed around the Z-Axis
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S)) {
-        	if (Mappers.movementMapper.has(player)) {
-        		player.remove(MovementCommand.class);
-        	}
+        	player.remove(MovementCommand.class);
         }
         if (Gdx.input.isKeyJustPressed(Input.Keys.F)) {
         	if (Gdx.graphics.isFullscreen()) {
@@ -143,9 +144,18 @@ public class GameScreen implements Screen {
                 if (button == Input.Buttons.RIGHT) {
                 	vec.x = x;
                 	vec.y = y;
-                	Vector3 mouse = cam.unproject(vec);
+                	Vector3 mouse3 = cam.unproject(vec);
+                	Vector2 mouse = new Vector2(mouse3.x, mouse3.y);
                 	Vector2 pv = Mappers.positionMapper.get(player).position;
-        			player.add(new MovementCommand(pv.x, pv.y, mouse.x, mouse.y));
+//        			player.add(new MovementCommand(pv, mouse.x, mouse.y)); // add movement command
+                	
+                	Room start = dungeon.getRoomAtPoint(pv);
+                	Room end = dungeon.getRoomAtPoint(new Vector2(mouse.x, mouse.y));
+                	if (start != null && end != null) {
+                		testPath = dungeon.getGraphPath(start, end);
+//                		player.a  dd(new PathMovementCommand(pv, mouse, testPath));
+                	}
+                	
                     return true;
                 }
                 if (button == Input.Buttons.LEFT) {
@@ -207,7 +217,7 @@ public class GameScreen implements Screen {
 	    cam.update();
 	    cs.update(cam.combined); // TEMP FOR COLL DEBUG
 	    batch.setProjectionMatrix(cam.combined);
-	    dungeon.render(cam.combined);
+	    dungeon.render(cam.combined, testPath);
 		engine.update(delta);
 	}
 

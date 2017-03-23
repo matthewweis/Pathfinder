@@ -26,6 +26,7 @@ import com.mweis.pathfinder.engine.entity.systems.CollisionSystem;
 import com.mweis.pathfinder.engine.util.Mappers;
 import com.mweis.pathfinder.engine.views.AnimationMap;
 import com.mweis.pathfinder.engine.views.ResourceManager;
+import com.mweis.pathfinder.game.entity.behavior.states.ZombieStates;
 
 public class EntityFactory {
 	
@@ -113,7 +114,7 @@ public class EntityFactory {
 		return entity;
 	}
 	
-	public static Entity spawnAiTest(Entity player, float x, float y, float speed, float scale, Engine engine) {
+	public static Entity spawnAiBehaviorTest(Entity player, float x, float y, float speed, float scale, Engine engine) {
 		Texture walkSheet = ResourceManager.getTexture("mage");
 		final int FRAME_COLS = 5;
 		final int FRAME_ROWS = 5;
@@ -208,7 +209,7 @@ public class EntityFactory {
 						if (Mappers.positionMapper.has(entity) && Mappers.positionMapper.has(player)) { // run to where they are
 							Vector2 myPos = Mappers.positionMapper.get(entity).position;
 							Vector2 playerPos = Mappers.positionMapper.get(player).position;
-							entity.add(new MovementCommand(myPos.x, myPos.y, playerPos.x, playerPos.y));
+							entity.add(new MovementCommand(myPos, playerPos.x, playerPos.y));
 						}
 					}	
 				},
@@ -216,13 +217,88 @@ public class EntityFactory {
 				new Behavior() {
 					@Override
 					public void perscribeBehavior(Entity entity) {
-						if (Mappers.movementMapper.has(entity)) {
-							entity.remove(MovementCommand.class);
-						}
+						entity.remove(MovementCommand.class);
 					}
 				});
 		BehaviorTree bt = new BehaviorTree(root);
 		entity.add(new AIComponent(bt));
+		
+		engine.addEntity(entity);
+		
+		return entity;
+	}
+	
+	public static Entity spawnAiStateTest(Entity player, float x, float y, float speed, float scale, Engine engine) {
+		Texture walkSheet = ResourceManager.getTexture("mage");
+		final int FRAME_COLS = 5;
+		final int FRAME_ROWS = 5;
+		
+		TextureRegion[][] tmp = TextureRegion.split(walkSheet, walkSheet.getWidth() / FRAME_COLS, walkSheet.getHeight() / FRAME_ROWS);
+		
+		float ratioY = scale / (walkSheet.getHeight() / FRAME_ROWS);
+		float ratioX = scale / (walkSheet.getWidth() / FRAME_COLS);
+		
+		AnimationMap map = new AnimationMap() {
+			
+			@Override
+			public Animation<TextureRegion> walkUp() {
+				TextureRegion[] frames = {tmp[1][2], tmp[1][3], tmp[1][4]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> walkDown() {
+				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> walkLeft() {
+				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][2]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> walkRight() {
+				TextureRegion[] frames = {tmp[0][0], tmp[0][1], tmp[0][2]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> crawlLeft() {
+				TextureRegion[] frames = {tmp[1][0], tmp[1][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> crawlRight() {
+				TextureRegion[] frames = {tmp[1][0], tmp[1][1]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> attack() {
+				TextureRegion[] frames = {tmp[0][3], tmp[0][4]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+			@Override
+			public Animation<TextureRegion> _default() {
+				TextureRegion[] frames = {tmp[0][0]};
+				return new Animation<TextureRegion>(0.25f, frames);
+			}
+		};
+		
+		
+		Entity entity = new Entity();
+		entity.add(new DirectionComponent());
+		entity.add(new PositionComponent(x, y));
+		float anim_ox = ratioX * walkSheet.getHeight() / (FRAME_ROWS * 2); // x is midpoint
+		float anim_oy = ratioY * walkSheet.getWidth() / (FRAME_COLS * 10); // just a little above feet
+		
+		entity.add(new AnimationComponent(map, new Vector2(anim_ox, anim_oy), scale, scale));
+		entity.add(new SpeedComponent(speed));
+		
+		// each sprite is in a 60x60 box
+		
+		float coll_ox = scale * .1f;
+		float coll_oy = scale * 0.10f;
+		
+		
+		entity.add(new AIComponent(ZombieStates.IDLE));
 		
 		engine.addEntity(entity);
 		

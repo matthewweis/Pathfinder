@@ -10,9 +10,15 @@ public class MovementCommand implements Component {
 	public float dist;
 	
 	
-	public MovementCommand(float startx, float starty, float x, float y) {
+	public MovementCommand(Vector2 start, float x, float y) {
 		end = new Vector2(x, y);
-		start = new Vector2(startx, starty);
+		this.start = start;
+		dist = start.dst(end);
+	}
+	
+	public MovementCommand(Vector2 start, Vector2 end) {
+		this.start = start;
+		this.end = end;
 		dist = start.dst(end);
 	}
 		

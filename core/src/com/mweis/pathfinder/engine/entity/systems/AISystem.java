@@ -18,7 +18,13 @@ public class AISystem extends IteratingSystem {
 
 	@Override
 	protected void processEntity(Entity entity, float deltaTime) {
-		Behavior currentBehavior = Mappers.aiMapper.get(entity).behaviorTree.getBehavior();
-		currentBehavior.perscribeBehavior(entity);
+		AIComponent ac = Mappers.aiMapper.get(entity);
+		
+		if (ac.behaviorTree != null) {
+			Behavior currentBehavior = ac.behaviorTree.getBehavior();
+			currentBehavior.perscribeBehavior(entity);
+		} else if (ac.state != null) {
+			ac.state.update(entity);
+		}
 	}
 }

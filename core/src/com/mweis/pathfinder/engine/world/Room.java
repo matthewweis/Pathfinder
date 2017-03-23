@@ -1,6 +1,7 @@
 package com.mweis.pathfinder.engine.world;
 
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 
 /*
  * https://github.com/fisherevans/ProceduralGeneration/blob/master/dungeons/src/main/java/com/fisherevans/procedural_generation/dungeons/Room.java
@@ -10,6 +11,8 @@ import com.badlogic.gdx.math.Rectangle;
 public class Room implements Comparable<Room> {
 	private int _left, _right, _top, _bottom;
 	private Rectangle bounds = new Rectangle();
+	private float centerX, centerY;
+	private Vector2 center = new Vector2();
 	
 	public Room(int x1, int y1, int width, int height) {		
         _left = x1;
@@ -91,11 +94,15 @@ public class Room implements Comparable<Room> {
 	}
 	
 	public float getCenterX() {
-		return (_left+_right)/2.0f;
+		return centerX;
 	}
 	
 	public float getCenterY() {
-		return (_top+_bottom)/2.0f;
+		return centerY;
+	}
+	
+	public Vector2 getCenter() {
+		return center;
 	}
 	
 	public Rectangle getBounds() {
@@ -137,5 +144,8 @@ public class Room implements Comparable<Room> {
     
     private void updateBounds() {
     	bounds.set(_left, _bottom, _right - _left, _top - _bottom);
+    	centerX = (_left+_right)/2.0f;
+    	centerY = (_top+_bottom)/2.0f;
+    	center.set(centerX, centerY);
     }
 }

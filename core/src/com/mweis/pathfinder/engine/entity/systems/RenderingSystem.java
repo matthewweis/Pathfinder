@@ -29,9 +29,9 @@ public class RenderingSystem extends IteratingSystem {
 		batch.begin();
 		PositionComponent position = Mappers.positionMapper.get(entity);
 		
-		if (Mappers.spriteMapper.has(entity)) {
-			SpriteComponent sprite = Mappers.spriteMapper.get(entity);
-			
+		SpriteComponent sprite = Mappers.spriteMapper.get(entity);
+		AnimationComponent anim = Mappers.animationMapper.get(entity);
+		if (sprite != null) {			
 			if (sprite.sprite != null) {
 				sprite.sprite.setCenter(position.position.x, position.position.y); // set sprite pos to entity pos
 			}
@@ -41,9 +41,7 @@ public class RenderingSystem extends IteratingSystem {
 					sprite.sprite.draw(batch);
 				}
 			}
-		} else if (Mappers.animationMapper.has(entity)) {
-			AnimationComponent anim = Mappers.animationMapper.get(entity);
-			
+		} else if (anim != null) {			
 			// moving check
 			if (Mappers.movementMapper.has(entity)) {
 				anim.stateTime += deltaTime; // only update movement when walking
@@ -53,8 +51,8 @@ public class RenderingSystem extends IteratingSystem {
 			
 			TextureRegion currFrame = anim.map._default().getKeyFrame(anim.stateTime, true);
 			
-			if (Mappers.directionMapper.has(entity)) {
-				DirectionComponent dir = Mappers.directionMapper.get(entity);
+			DirectionComponent dir = Mappers.directionMapper.get(entity);
+			if (dir != null) {
 				if (dir.getDegrees() > -135 && dir.getDegrees() < -45) { // up
 					currFrame = anim.map.walkUp().getKeyFrame(anim.stateTime, true);
 				} else if (dir.getDegrees() > -45 && dir.getDegrees() < 45) { // left

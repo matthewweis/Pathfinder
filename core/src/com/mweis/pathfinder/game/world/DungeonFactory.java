@@ -160,7 +160,7 @@ public class DungeonFactory {
                 	if (!graph.hasKey(a)) {
                 		graph.addKey(a);
                 	}
-					float dist = new Vector2(a.getCenterX(), a.getCenterY()).dst(new Vector2(b.getCenterX(), b.getCenterY()));						
+					float dist = a.getCenter().dst(b.getCenter());						
                 	graph.addConnection(a, new Edge<Room>(a, b, dist));
 //                    if(graph.get(a) == null)
 //                        graph.put(a, new Array<Room>());

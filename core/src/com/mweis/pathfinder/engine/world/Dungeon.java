@@ -2,6 +2,9 @@ package com.mweis.pathfinder.engine.world;
 
 
 import com.badlogic.gdx.ai.pfa.Connection;
+import com.badlogic.gdx.ai.pfa.DefaultGraphPath;
+import com.badlogic.gdx.ai.pfa.Heuristic;
+import com.badlogic.gdx.ai.pfa.indexed.IndexedAStarPathFinder;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Matrix4;
@@ -10,6 +13,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.IntMap;
 import com.badlogic.gdx.utils.IntMap.Keys;
+import com.badlogic.gdx.utils.ObjectFloatMap;
 import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.ObjectSet;
 import com.mweis.pathfinder.engine.graph.DGraph;
@@ -36,7 +40,9 @@ public class Dungeon {
 	public final int UNITS_PER_PARTITION = 20; // units per square in the spatial partition for vectors -> rooms
 	public final int PARTITION_WIDTH;
 	private final IntMap<Array<Room>> spatialPartition; // where Integer is x+y*unitsPerPartition coord
-		
+	private final IndexedAStarPathFinder<Room> pathFinder;
+	private final Heuristic<Room> heuristic;
+	
 	public Dungeon(Room start, Room end, Array<Room> rooms, Array<Room> corridors, Array<Room> halls2, DGraph<Room> criticalRoomGraph,
 			int minSideLength, int maxSideLength, int hallWidth, float minRatio, float maxRatio) {
 		this.startRoom = start;
@@ -78,7 +84,15 @@ public class Dungeon {
 		this.PARTITION_WIDTH = (int) Math.ceil((double)this.WIDTH / this.UNITS_PER_PARTITION);
 		this.spatialPartition = this.createSpatialParition();
 		this.dungeonGraph = this.createDungeonGraph();
+		this.pathFinder = new IndexedAStarPathFinder<Room>(this.dungeonGraph);
+		this.heuristic = new Heuristic<Room>() {
+			@Override
+			public float estimate(Room node, Room endNode) {
+				return Math.abs(node.getCenter().dst(endNode.getCenter())); // is it better to find the connection between them which is precomputed?
+			}
+		};
 //		this.testMap = this.createTestGraph();
+		
 	}
 	
 	public Array<Room> getDungeon() {
@@ -114,7 +128,7 @@ public class Dungeon {
 	}
 	
 	ShapeRenderer sr = new ShapeRenderer();
-	public void render(Matrix4 combined) {
+	public void render(Matrix4 combined, DefaultGraphPath<Room> path) {
 		sr.setProjectionMatrix(combined);
 	    sr.begin(ShapeRenderer.ShapeType.Filled);
 	    
@@ -177,6 +191,14 @@ public class Dungeon {
 //				sr.line(a.getCenterX(), a.getCenterY(), b.getCenterX(), b.getCenterY());
 //			}
 //		}
+		
+		if (path != null) {
+			sr.setColor(Color.WHITE);
+		    for (Room room : path) {
+		    	sr.rect(room.getLeft(), room.getBottom(), room.getWidth(), room.getHeight());
+		    }
+		}
+	    
 		
 		sr.end();
 	}
@@ -241,7 +263,6 @@ public class Dungeon {
 		 * a hall is a room
 		 */
 		DGraph<Room> graph = new DGraph<Room>();
-		
 		// because a hallway will always connect two rooms, we use this as a reference for graph building
 		for (Room hall : this.getHalls()) {
 			for (Room room : this.getDungeon()) {
@@ -403,6 +424,39 @@ public class Dungeon {
 		}
 		
 		return rooms;
+	}
+	
+	public Room getRoomAtPoint(Vector2 point) {
+		Array<Room> rooms = spatialPartition.get(calculatePartitionKey(point.x, point.y));
+		if (rooms != null) {
+//			Room nonHallway = null; // allows us to prefer hallways over other rooms
+			for (Room room : rooms) {
+				if (room.getBounds().contains(point)) {
+//					if (roomTypeMap.get(room) == RoomType.HALLWAY) {
+						return room;
+//					} else {
+//						nonHallway = room;
+//					}
+				}
+//				return nonHallway;
+			}
+		}
+		return null;
+	}
+	
+	public DefaultGraphPath<Room> getGraphPath(Room start, Room end) {
+		DefaultGraphPath<Room> path = new DefaultGraphPath<Room>();
+		if (pathFinder.searchNodePath(start, end, heuristic, path)) {
+			return path;
+		} else {
+			try {
+				throw new Exception();
+			} catch (Exception e) {
+				System.out.println("unable to find a graph path");
+				e.printStackTrace();
+			}
+			return null;
+		}
 	}
 	
 	public Integer calculatePartitionKey(float x, float y) {
